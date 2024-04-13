@@ -8,7 +8,7 @@ output:
     df_print: kable
 date: 'Compiled: `r format(Sys.Date(), "%B %d, %Y")`'
 vignette: >
-  %\VignetteIndexEntry{rescueVignette}
+  %\VignetteIndexEntry{rebelVignette}
   %\VignetteEncoding{UTF-8}
   %\VignetteEngine{knitr::rmarkdown}
 editor_options: 

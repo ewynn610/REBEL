@@ -29,7 +29,7 @@ rebelKRParams=function (RebelFitObj, parallel=F, nCores=1) {
 
     theta_list=lapply(gene_names,function(y){
         vapply(c(EBEstimates[y,"reVarSamp"], EBEstimates[y,"reVarSubj"]),
-               function(x) VarCov2Theta(x, EBEstimates[y,"resVar"]),
+               function(x) .varCov2Theta(x, EBEstimates[y,"resVar"]),
                FUN.VALUE = numeric(1))
     })
     sigma_vals=sqrt(EBEstimates[, "resVar"])
@@ -105,7 +105,7 @@ rebelKRParams=function (RebelFitObj, parallel=F, nCores=1) {
 }
 
 
-VarCov2Theta <- function(X, res_var){
+.varCov2Theta <- function(X, res_var){
     if(X==0) return(0)
     else{
         X <- t(chol(X/res_var))
@@ -191,14 +191,14 @@ VarCov2Theta <- function(X, res_var){
             samps=unique(samp_vars[subj_vars==subj])
             samps_n=table(samp_vars)[samps]
             m=samps_n[1]
-            ainv=sherm_morr_inv(my_a,my_b,m)
+            ainv=.shermMorrInv(my_a,my_b,m)
             if(length(samps)>1){
                 for (i in seq(2, length(samps))) {
                     n=samps_n[i]
                     short=i==2
-                    my_sinv=calc_sinv(my_a, my_b, my_c, ainv, n, short)
-                    q1=quad1(ainv, my_c, my_sinv, short)
-                    q3=quad3(my_sinv, my_c, ainv, short)
+                    my_sinv=.calc_sinv(my_a, my_b, my_c, ainv, n, short)
+                    q1=.quad1(ainv, my_c, my_sinv, short)
+                    q3=.quad3(my_sinv, my_c, ainv, short)
                     ainv=rbind(cbind(q1, t(q3)), cbind(q3, my_sinv))
                 }
             }
@@ -337,14 +337,14 @@ VarCov2Theta <- function(X, res_var){
 
 ## Functions to speed up matrix inverse
 ## See https://en.wikipedia.org/wiki/Invertible_matrix under "Blockwise inversion"
-sherm_morr_inv=function(my_a,my_b,n){
+.shermMorrInv=function(my_a,my_b,n){
     val=-my_b/((my_a-my_b)*(n*my_b+my_a-my_b))
     mat=matrix(val, n,n)
     diag(mat)=val+1/(my_a-my_b)
     mat
 }
 
-quad1=function(ainv, c1, sinv, short){
+.quad1=function(ainv, c1, sinv, short){
     if(short){
         ainv+sum(ainv[1,])^2*c1^2*ncol(sinv)*sum(sinv[,1])
     }else{
@@ -355,7 +355,7 @@ quad1=function(ainv, c1, sinv, short){
 
 }
 
-quad3=function(sinv, c1, ainv, short){
+.quad3=function(sinv, c1, ainv, short){
     if(short){
         matrix(-sum(sinv[1,])*c1*sum(ainv[,1]),nrow=nrow(sinv),ncol=ncol(ainv))
     }else{
@@ -364,7 +364,7 @@ quad3=function(sinv, c1, ainv, short){
     }
 }
 
-calc_sinv=function(d1, d2, c1, ainv,n, short){
+.calc_sinv=function(d1, d2, c1, ainv,n, short){
     val=if(short){
         c1^2*sum(ainv[,1])*ncol(ainv)
     }else{
@@ -372,7 +372,7 @@ calc_sinv=function(d1, d2, c1, ainv,n, short){
     }
     d1_new=d1-val
     d2_new=d2-val
-    sherm_morr_inv(d1_new, d2_new,n)
+    .shermMorrInv(d1_new, d2_new,n)
 }
 
 ## Internal helper function from pbkrtest package
@@ -388,18 +388,4 @@ calc_sinv=function(d1, d2, c1, ainv,n, short){
     else {
         (j - 1) * (N - j/2) + i
     }
-}
-
-
-
-
-
-VarCov2Theta <- function(X, res_var){
-    if(X==0) return(0)
-    else{
-        X <- t(chol(X/res_var))
-        X_unpacked <- X[lower.tri(X, diag=T)]
-        return(X_unpacked)
-    }
-
 }
