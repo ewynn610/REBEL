@@ -8,4 +8,12 @@
 \description{
 Simulate data from repeated measures scRNA-seq data and analyze differential expression between groups/timepoints in individual cell types
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://github.com/ewynn610/REBEL}
+  \item Report bugs at \url{https://github.com/ewynn610/REBEL/issues}
+}
+
+}
 \keyword{internal}

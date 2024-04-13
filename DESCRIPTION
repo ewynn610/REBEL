@@ -10,6 +10,7 @@ License: What license is it under?
 Encoding: UTF-8
 Suggests: 
     knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 biocViews: SingleCell RNASeq Bayesian Regression Transcriptomics
@@ -31,7 +32,7 @@ Imports:
     SummarizedExperiment
 RoxygenNote: 7.2.3
 Depends: 
-    R (>= 2.10)
+    R (>= 4.4.0)
 LazyData: true
 URL: https://github.com/ewynn610/REBEL
 BugReports: https://github.com/ewynn610/REBEL/issues
