@@ -26,7 +26,7 @@ Imports:
     parallel,
     pbapply,
     pbkrtest,
-    RESCUE,
+    RESCUE (>= 0.1.0),
     SingleCellExperiment,
     SummarizedExperiment
 RoxygenNote: 7.2.3
@@ -35,3 +35,5 @@ Depends:
 LazyData: true
 URL: https://github.com/ewynn610/REBEL
 BugReports: https://github.com/ewynn610/REBEL/issues
+Remotes:  
+    ewynn610/Rescue
