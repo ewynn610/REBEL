@@ -7,7 +7,7 @@ REBEL is an R package for analyzing cell-type specific differential expression i
 if (!requireNamespace("devtools", quietly = TRUE)) {
   install.packages("devtools")
 }
-devtools::install_github("https://github.com/ewynn610/REBEL")
+devtools::install_github("https://github.com/ewynn610/REBEL", build_vignettes = TRUE)
 ```
 
 Once the package is installed, to access a vignette introducing the package workflow use:
