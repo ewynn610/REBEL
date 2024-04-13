@@ -33,3 +33,5 @@ RoxygenNote: 7.2.3
 Depends: 
     R (>= 2.10)
 LazyData: true
+URL: https://github.com/ewynn610/REBEL
+BugReports: https://github.com/ewynn610/REBEL/issues
