@@ -1,0 +1,35 @@
+Package: REBEL
+Type: Package
+Title: Repeated Measures Empirical Bayes Differential Expression Using LMM
+Version: 0.1.0
+Author: Elizabeth Wynn <elizabeth.2.wynn@cuanschutz.edu>
+Maintainer: Elizabeth Wynn <elizabeth.2.wynn@cuanschutz.edu>
+Description: Simulate data from repeated measures scRNA-seq data and analyze
+    differential expression between groups/timepoints in individual cell types
+License: What license is it under?
+Encoding: UTF-8
+Suggests: 
+    knitr,
+    testthat (>= 3.0.0)
+VignetteBuilder: knitr
+biocViews: SingleCell RNASeq Bayesian Regression Transcriptomics
+    DifferentialExpression GeneExpression
+Config/testthat/edition: 3
+Imports: 
+    dplyr,
+    limma,
+    lme4,
+    lmerTest,
+    Matrix,
+    Matrix.utils,
+    methods,
+    parallel,
+    pbapply,
+    pbkrtest,
+    RESCUE,
+    SingleCellExperiment,
+    SummarizedExperiment
+RoxygenNote: 7.2.3
+Depends: 
+    R (>= 2.10)
+LazyData: true

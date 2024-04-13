@@ -1,0 +1,357 @@
+---
+title: "REBEL: Repeated measures Empirical Bayes differential Expression analysis using Linear mixed models"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    theme: united
+    df_print: kable
+date: 'Compiled: `r format(Sys.Date(), "%B %d, %Y")`'
+vignette: >
+  %\VignetteIndexEntry{rescueVignette}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+REBEL is an R package for analyzing cell-type specific differential
+expression in longitudinal and other repeated measure scRNA-seq studies.
+This package implements a method using a linear mixed model (LMM)
+framework with an empirical Bayes process to improve estimation of
+residual and random effect variance by sharing information across genes.
+This method uses either cell-level data, in which case random intercepts
+for subject and sample are used to account for correlation in the data,
+or pseudo-bulk data, in which case cell-level counts are aggregated
+across cells and a random intercept for subject is included in the
+model. Models can be fit with multiple fixed effects including group
+variables that vary on a subject level (i.e. disease vs control),
+variables that vary within a subject, such as time related variables
+(i.e. baseline, follow-up), and interaction effects. Hypothesis testing
+is performed on model coefficients or linear contrasts using
+Kenward-Roger degrees of freedom estimated using empirical Bayes
+variance estimates.
+
+# Installation
+
+REBEL is available on github at: <https://github.com/ewynn610/REBEL>.
+
+It can be installed using:
+
+```{r installation, eval=FALSE,include=TRUE}
+if (!requireNamespace("devtools", quietly = TRUE)) {
+  install.packages("devtools")
+}
+devtools::install_github("https://github.com/ewynn610/REBEL")
+```
+
+# Package Framework
+
+REBEL is designed to test for differential expression for covariates
+within a *single* cell type or subpopulation of cells. The package
+workflow begins using scRNA-seq data that has been processed and data
+has been filtered to a cell type of interest.
+
+Figure 1 shows the basic workflow of the REBEL package which can be
+split into three sections:
+
+-   Data preprocessing: aggregating data (pseudo-bulk option only) and
+    applying a normalizing transformation to the counts.
+
+-   Fitting REBEL models: fitting LMM's, calculating empirical Bayes
+    variance estimates, calculating parameters that are used for the
+    Kenward Roger's degrees of freedom method.
+
+-   Hypothesis testing: performing tests for differential expression for
+    model fixed effects.
+
+![Figure 1: Basic package workflow](images/fig3.1-01.jpg)
+
+We will provide a more in depth of this process using a real example.
+
+# Simulation and processing of Example Data
+
+We use data simulated using the `Rescue` package, which can be used to
+simulate single-cell type longitudinal scRNA-seq data. We use preset
+simulation parameters available in the package, but parameters can also
+be estimated from empirical data.
+
+We simulated data with a two group (ex. control group, treatment group),
+two timepoint (ex. baseline, follow-up) design and simulate 5 subjects
+for each group (10 total subjects, 20 samples). Data is simulated so
+that 20% of genes are differentially expressed with a log-fold change of
+0.5 between the group1 at time1 and all other group/time combinations.
+Samples were simulated to have between 50 and 150 cells with the number
+of cells per sample drawn from a discrete uniform distribution. To
+decrease computation times for this example, we analyze only the first
+100 genes in the simulated data.
+
+```{r}
+library(RESCUE)
+library(SummarizedExperiment)
+library(REBEL)
+
+## Set seed for reproducibility
+set.seed=24
+
+## Load present 
+data("RecAM_params")
+
+## Adjust parameters
+RecAM_params <- updateRescueParams(
+    paramObj = RecAM_params,
+    paramValues = list(
+        twoGroupDesign = T,
+        maxCellsPerSamp=150,
+        minCellsPerSamp=50,
+        propDE=.2,
+        deLogFC=1
+    )
+)
+
+## Simulate data
+dat <- simRescueData(RecAM_params)
+
+## Function returns a single cell experiment object
+class(dat)
+
+## Remove genes that have more than 75% 0's
+idx_rm=which(rowSums(assay(dat, "counts")==0)>(.75*ncol(dat)))
+dat=dat[-idx_rm,]
+
+## Subset to first 100 genes
+dat=dat[1:100,]
+
+## The raw counts are located in the counts assay of the object
+assay(dat, "counts")[1:5,1:5]
+
+## Data also contains cell-level meta data
+head(colData(dat))
+
+```
+
+# Cell-level Workflow
+
+## Data Preprocessing
+
+First we will show the workflow for an analysis using cell-level data.
+The first step in the workflow is to perform a transformation to
+normalize the raw counts. We use the variance stabilizing transformation
+from the `sctransform` package, but users can use any transformation
+that produces normally distributed data for scRNA-seq data. We save the
+normalized data in the `normcounts` assay of the `singlecellexperiment`
+object.
+
+```{r}
+
+assay(dat, "normcounts")<-sctransform::vst(counts(dat))$y
+```
+
+## Model Fitting
+
+The model fitting process includes three steps. First LMM models are fit
+using the `rebelLMM` function. For cell-level data, models are fit using
+random intercept terms for sample and subject as well as specified fixed
+effect terms. We utilize the `lmerTest` package to fit individual
+models. Next, using the `rebelEmpBayes` function, residual and random
+effect variances are re-estimated using an empirical Bayes process where
+information across genes is borrowed to get more accurate estimates.
+Finally, parameter estimates used in the Kenward-Roger degrees of
+freedom method are calculated using the `rebelKRParams` function. We
+draw on the `pbkrtest` package to estimate these values, but make
+adjustments so that empirical Bayes estimates are used to get the
+parameter estimates. We also simplify the estimation process by making
+it specific to random intercept models, which decreases computation time
+considerably.
+
+We provide a wrapper function `rebelFit` that combines these three
+functions into one convenient function. Below, we outline the function
+arguments used in `rebelFit.`
+
+|      Argument      | Description                                                                                                                                                                                                                                   |    Default     |
+|:----------------:|:-----------------------------------|:----------------:|
+|      `object`      | `SingleCellExperiment` object (cell-level data) or `SummarizedExperiment` object (pseudo-bulk data) containing normalized count values in one of the object assays and cell/sample level meta data in the `colData` slot.                     |       NA       |
+|      `assay`       | String specifying assay in `object` which holds normalized count values.                                                                                                                                                                      | `"normcounts"` |
+|   `fixedEffects`   | One sided linear formula describing the fixed-effects on the right of the \~ operator. Terms should be separated by + operators. Terms should be variables in `colData`.                                                                      |       NA       |
+| `subjectVariable`  | String denoting name of subject identifier variable in the `colData` to be used as the subject-level random effect in the LMM model.                                                                                                          |       NA       |
+|  `sampleVariable`  | String denoting name of sample identifier variable in the `colData` to be used as the sample-level random effect in the LMM model. For pseudo-bulk data where no sample-level random effect is used, should be `NULL`.                        |     `NULL`     |
+| `normalizedCounts` | Optional matrix-like object containing normalized counts. Used in conjunction with `colData` argument in place of `object`. Matrix should contain genes in the rows and cells (cell-level data) or samples (pseudo-bulk data) in the columns. |     `NULL`     |
+|     `colData`      | Optional dataframe object containing cell/sample level meta data which is used with `normalizedCounts` argument in place of `object`. Row names of dataframe should match column names of `normalizedCounts`.                                 |     `NULL`     |
+|    `pseudoBulk`    | Logical value indicating whether a pseudo-bulk or cell-level analysis is being performed.                                                                                                                                                     |     `TRUE`     |
+|     `parallel`     | Logical value indicating whether to use parallelization via `mclapply`.                                                                                                                                                                       |    `FALSE`     |
+|      `nCores`      | Number of cores to use if `parallel` is `TRUE`.                                                                                                                                                                                               |       1        |
+|    `outputFits`    | Logical value indicating whether or not to include fit objects from `lmerTest` in the output. Only necessary if user would like to inspect elements of the object. May use a large amount of memory if `TRUE`.                                |    `FALSE`     |
+|      `quiet`       | Logical value indicating whether messages should be printed at each step                                                                                                                                                                      |    `FALSE`     |
+|       `REML`       | Logical value indicating if LMM models should be fit using REML or regular ML                                                                                                                                                                 |     `TRUE`     |
+
+Now we use fit the REBEL models using `rebelFit`. We will fit a model
+with time and group fixed effects as well as an interaction effect.
+
+```{r}
+
+rebelFit_obj<-rebelFit(object=dat, fixedEffects = ~time*group, 
+                       subjectVariable ="subjectID", sampleVariable = "sampleID",
+                       pseudoBulk = F)
+
+```
+
+The resulting object is of the class `RebelFit` which holds information
+about the function call, model parameters and model fits.
+
+```{r}
+class(rebelFit_obj)
+
+```
+
+The table below describes the slots in the `RebelFit` object.
+
+|       Slot        | Description                                                                                                                                                                                                                                                          |
+|:------------------:|:---------------------------------------------------|
+|    `geneNames`    | Vector containing gene names taken from the row names of the `object` or `normalizedCounts` provided in the `rebelFit` function call                                                                                                                                 |
+|      `fits`       | List of `lmerModLmerTest` fit objects with one object for each gene. Not included if `outputFits=FALSE`.                                                                                                                                                             |
+|   `modelMatrix`   | Design matrix for the model fixed effects                                                                                                                                                                                                                            |
+|  `coefficients`   | Dataframe of model coefficients with columns representing the model fixed effects and each row representing an individual gene                                                                                                                                       |
+| `originalFitVar`  | Dataframe of residual and random effect variance values from original model fits before empirical Bayes estimation. A logical value indicating whether the original fit was singular or not is also included.                                                        |
+|   `miscFitInfo`   | Miscellaneous information from model fits that is needed for hypothesis testing.                                                                                                                                                                                     |
+| `sampleVariable`  | String denoting name of sample identifier variable in the `colData` which was used as the sample-level random effect in the LMM model. For pseudo-bulk data where no sample-level random effect is used, this value is `NULL`.                                       |
+| `subjectVariable` | String denoting name of subject identifier variable in the `colData` which was used as the subject-level random effect in the LMM model.                                                                                                                             |
+|   `pseudoBulk`    | Logical value indicating whether a pseudo-bulk or cell-level analysis is being performed.                                                                                                                                                                            |
+|   `EBEstimates`   | Dataframe with the empirical Bayes residual variance and random intercept variance for each gene.                                                                                                                                                                    |
+|  `EBParameters`   | Dataframe with the parameters used to get empirical Bayes estimates.                                                                                                                                                                                                 |
+|  `vcovBetaList`   | List of variance/covariance matrices with one matrix per gene.                                                                                                                                                                                                       |
+| `vcovBetaAdjList` | List of adjusted variance/covariance matrices for each gene calculated using the Kenward-Roger's method. Additional parameters used for the Kenward-Roger's degrees of freedom estimation are also included. See `pbkrtest` function `vcovAdj` for more information. |
+
+## Hypothesis Testing
+
+After fitting models and estimating empirical Bayes and Kenward-Roger's
+parameters, the `rebelTest` function can be used to perform differential
+expression testing on fixed effects. The function takes a `RebelFit`
+object and then either a `coef` argument or a `contrast` argument. The
+value for `coef` should be a string representing a model coefficient,
+while `contrast` should contain a numeric vector the same length as the
+number of fixed effects containing a one-dimensional contrast.
+
+Here we test the interaction coefficient.
+
+```{r}
+interaction_coef_test=rebelTest(rebelFit_obj, coef="timetime1:groupgroup1")
+```
+
+The output of the function is a dataframe with testing information,
+including Kenward-Rogers estimates for the standard error and degrees of
+freedom as well as the FDR adjusted p-values, for each gene.
+
+```{r}
+head(interaction_coef_test)
+```
+
+We can obtain identical results using a numeric contrast to test for the
+interaction effect.
+
+```{r}
+interaction_contrast_test=rebelTest(rebelFit_obj, contrast = c(0,0,0,1))
+head(interaction_coef_test)
+identical(interaction_coef_test, interaction_contrast_test)
+```
+
+We can also test more complicated contrasts such as for a difference
+between timepoints in group 1.
+
+```{r}
+time_contrast_test<-rebelTest(rebelFit_obj, contrast=c(0,1,0,1))
+head(time_contrast_test)
+```
+
+# Pseudo-bulk Workflow
+
+The pseudo-bulk workflow follows the same general framework as the
+cell-level workflow. Below we outline the workflow, highlighting the
+differences between the pseudo-bulk and cell-level workflows.
+
+## Data Preprocessing
+
+Pseudo-bulk analysis requires the additional preprocessing step of
+aggregating counts for each gene across each sample before
+normalization. We include the function `rebelAggregate` to accomplish
+this step. The function arguments are summarized below.
+
+|     Argument     | Description                                                                                                                                                                                  |  Default   |
+|:---------------:|:-------------------------------------|:---------------:|
+|     `object`     | `SingleCellExperiment` object containing count values in one of the object assays and cell level meta data in the `colData` slot.                                                            |     NA     |
+|  `countsAssay`   | String specifying assay in `object` which holds count values.                                                                                                                                | `"counts"` |
+|     `counts`     | Optional matrix-like object containing counts. Used in conjunction with `colData` argument in place of `object`. Matrix should contain genes in the rows and cells in the columns.           |   `NULL`   |
+|    `colData`     | Optional dataframe object containing cell level meta data which is used with `counts` argument in place of `object`. Row names of dataframe should match column names of `normalizedCounts`. |   `NULL`   |
+| `sampleVariable` | String denoting name of sample identifier variable in the `colData` which counts should be aggregated over.                                                                                  |     NA     |
+
+Here, we aggregate the data by "sampleID".
+
+```{r}
+pb_dat=rebelAggregate(object=dat, countsAssay="counts", sampleVariable="sampleID")
+```
+
+The resulting object is of the class `summarizedExperiment` and includes
+pseudo-bulk counts in the `counts` assay. All `colData` variables that
+did not vary within `sampleID` are also included in the `colData` slot.
+
+```{r}
+class(pb_dat)
+head(assay(pb_dat, "counts"))
+colData(pb_dat)
+```
+
+The remainder of the workflow largely follows the cell-level analysis
+workflow. First, we normalize the data. For pseudo-bulk data we use the
+VST transformation from the `DESeq2` package, but any transformation for
+RNA-seq data that yields normally distributed counts can be used.
+
+```{r}
+## Apply VST and save results in normcounts assay
+assay(pb_dat,"normcounts")=DESeq2::varianceStabilizingTransformation(assay(pb_dat,"counts"), blind = F)
+```
+
+## Model Fitting
+
+We fit the REBEL models using the rebelFit function, but with the
+pseudo-bulk `summarizedExperiment` object as an argument. Additionally,
+because counts are aggregated over sample, only a subject-level random
+intercept is included in the model. Thus, the `sampleVariable` argument
+does not need to be specified
+
+```{r}
+## Fitting the models
+pbFits=rebelFit(pb_dat, fixedEffects = ~time*group, subjectVariable = "subjectID",
+                pseudoBulk = T)
+
+```
+
+## Hypothesis Testing
+
+Hypothesis testing is done in the same way as the cell-level workflow
+using the `rebelTest` function. Below we test the interaction
+coefficient.
+
+```{r}
+interaction_coef_test=rebelTest(pbFits, coef="timetime1:groupgroup1")
+head(interaction_coef_test)
+```
+
+Like the cell-level analysis, we can also specify numeric contrasts.
+Here we test for the difference between timepoints in group1.
+
+```{r}
+time_contrast_test<-rebelTest(pbFits, contrast=c(0,1,0,1))
+head(time_contrast_test)
+```
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
