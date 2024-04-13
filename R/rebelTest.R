@@ -26,7 +26,7 @@
 #' cell_fit <- rebelFit(object=RecAM_sim_sce_fil,
 #'                      fixedEffects = ~time*group,
 #'                      subjectVariable ="subjectID", sampleVariable = "sampleID",
-#'                      pseudoBulk = F)
+#'                      pseudoBulk = FALSE)
 #'
 #' ## Run test on interaction coefficient
 #' interaction_coef_test=rebelTest(cell_fit, coef="timetime1:groupgroup1")

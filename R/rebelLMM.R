@@ -22,30 +22,30 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
                      pseudoBulk, # Logical value, pseudo-bulk or not (if not cell level, pseudo-bulk)
                      subjectVariable,
                      sampleVariable=NULL,
-                     REML = T, # Fit mixed models using REML or ML
-                     parallel = F,
+                     REML = TRUE, # Fit mixed models using REML or ML
+                     parallel = FALSE,
                      cores = 2,
-                     outputFits=F
+                     outputFits=FALSE
 
 ){  ## Insufficient Information
 
 
-    if(is.null(normalizedCounts)==T ) {
+    if(is.null(normalizedCounts)==TRUE ) {
         stop("An expression matrix must be provided.")}
 
-    if(is.null(fixedEffects)==T ) {
+    if(is.null(fixedEffects)==TRUE ) {
         stop("A fixed effect formula must be provided.")}
 
-    if(is.null(colData)==T ) {
+    if(is.null(colData)==TRUE ) {
         stop("colData is missing.")}
 
     ## Inconsistent information
 
-    if((ncol(normalizedCounts)==nrow(colData))==F ) {
+    if((ncol(normalizedCounts)==nrow(colData))==FALSE ) {
         stop("The expression matrix and sample data include differing numbers of samples.")}
 
     # Gene Names
-    if(is.null(rownames(normalizedCounts))==T){rownames(normalizedCounts)<-paste0("gene",seq(1,nrow(normalizedCounts)))}
+    if(is.null(rownames(normalizedCounts))==TRUE){rownames(normalizedCounts)<-paste0("gene",seq(1,nrow(normalizedCounts)))}
     gene_names = as.character(rownames(normalizedCounts))
 
 
@@ -64,7 +64,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
     }
 
     ## Fit models
-    if(parallel == F){
+    if(parallel == FALSE){
         ret <- pbapply::pblapply(X = 1:nrow(normalizedCounts),FUN = function(i){
             .fitGeneMod(normalizedCounts[i,], gene_name=gene_names[i], colData,
                         formula, REML,subjectVariable = subjectVariable,
@@ -72,7 +72,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
                         pseudoBulk = pseudoBulk, outputFits = outputFits)
         })
     }else{
-        ret = parallel::mclapply(1:nrow(normalizedCounts), mc.silent = T,
+        ret = parallel::mclapply(1:nrow(normalizedCounts), mc.silent = TRUE,
                                  mc.cores = cores, function(i){
                                      .fitGeneMod(normalizedCounts[i,],
                                                  gene_name=gene_names[i],
@@ -98,7 +98,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
         fit=.fitGeneMod(normalizedCounts[idx,], gene_name=gene_names[idx], colData,
                         formula, REML,subjectVariable = subjectVariable,
                         sampleVariable = sampleVariable,
-                        pseudoBulk = pseudoBulk, outputFits = T)
+                        pseudoBulk = pseudoBulk, outputFits = TRUE)
         fit=fit$fit
     }
 

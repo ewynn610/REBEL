@@ -2,6 +2,7 @@
 "_PACKAGE"
 
 ## usethis namespace: start
+#' @importFrom DESeq2 varianceStabilizingTransformation
 #' @importFrom dplyr bind_cols
 #' @importFrom dplyr bind_rows
 #' @importFrom limma fitFDist
@@ -26,5 +27,8 @@
 #' @importFrom pbkrtest Lb_ddf
 #' @importFrom RESCUE simRescueData
 #' @importFrom RESCUE updateRescueParams
+#' @importFrom sctransform vst
+#' @importFrom SummarizedExperiment assay
+#' @importFrom SummarizedExperiment colData
 ## usethis namespace: end
 NULL

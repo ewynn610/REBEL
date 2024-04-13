@@ -17,6 +17,7 @@ biocViews: SingleCell RNASeq Bayesian Regression Transcriptomics
     DifferentialExpression GeneExpression
 Config/testthat/edition: 3
 Imports: 
+    DESeq2,
     dplyr,
     limma,
     lme4,
@@ -28,6 +29,7 @@ Imports:
     pbapply,
     pbkrtest,
     RESCUE (>= 0.1.0),
+    sctransform,
     SingleCellExperiment,
     SummarizedExperiment
 RoxygenNote: 7.2.3
@@ -36,5 +38,5 @@ Depends:
 LazyData: true
 URL: https://github.com/ewynn610/REBEL
 BugReports: https://github.com/ewynn610/REBEL/issues
-Remotes:  
+Remotes: 
     ewynn610/Rescue

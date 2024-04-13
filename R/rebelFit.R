@@ -53,7 +53,7 @@
 #'                                    fixedEffects = ~time*group,
 #'                                    subjectVariable ="subjectID",
 #'                                    sampleVariable = "sampleID",
-#'                                    pseudoBulk = F)
+#'                                    pseudoBulk = FALSE)
 #'
 #' ## Run pseudo-bulk analysis
 #' ## Read in data (DESeq2 VST normalized data saved in normcounts slot)
@@ -66,17 +66,17 @@
 #' pb_fit <- rebelFit(object=RecAM_sim_pb_fil,
 #'                                  fixedEffects = ~time*group,
 #'                                  subjectVariable ="subjectID",
-#'                                  pseudoBulk = T)
+#'                                  pseudoBulk = TRUE)
 rebelFit <- function(object,assay="normcounts", fixedEffects,subjectVariable,
                      sampleVariable=NULL, normalizedCounts=NULL,
-                     colData=NULL, pseudoBulk=T,parallel=F,
-                     nCores=1, outputFits=F, quiet=F, REML=T){
+                     colData=NULL, pseudoBulk=TRUE,parallel=FALSE,
+                     nCores=1, outputFits=FALSE, quiet=FALSE, REML=TRUE){
 
     if(exists("object")){
 
         if(inherits(object,"SingleCellExperiment")|inherits(object,"SummarizedExperiment")){
-            normalizedCounts=assay(object, assay)
-            colData=colData(object)
+            normalizedCounts=SummarizedExperiment::assay(object, assay)
+            colData=SummarizedExperiment::colData(object)
         }else{
             stop("Object should be a SingleCellExperiment or SummarizedExperiment object.
                  Alternatively, you can provide counts and colData explicitly")

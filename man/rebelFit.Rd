@@ -12,12 +12,12 @@ rebelFit(
   sampleVariable = NULL,
   normalizedCounts = NULL,
   colData = NULL,
-  pseudoBulk = T,
-  parallel = F,
+  pseudoBulk = TRUE,
+  parallel = FALSE,
   nCores = 1,
-  outputFits = F,
-  quiet = F,
-  REML = T
+  outputFits = FALSE,
+  quiet = FALSE,
+  REML = TRUE
 )
 }
 \arguments{
@@ -89,7 +89,7 @@ cell_fit <-rebelFit(object=RecAM_sim_sce_fil,
                                    fixedEffects = ~time*group,
                                    subjectVariable ="subjectID",
                                    sampleVariable = "sampleID",
-                                   pseudoBulk = F)
+                                   pseudoBulk = FALSE)
 
 ## Run pseudo-bulk analysis
 ## Read in data (DESeq2 VST normalized data saved in normcounts slot)
@@ -102,5 +102,5 @@ RecAM_sim_pb_fil <- RecAM_sim_pb[1:10,]
 pb_fit <- rebelFit(object=RecAM_sim_pb_fil,
                                  fixedEffects = ~time*group,
                                  subjectVariable ="subjectID",
-                                 pseudoBulk = T)
+                                 pseudoBulk = TRUE)
 }

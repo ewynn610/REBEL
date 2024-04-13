@@ -10,7 +10,7 @@
 #' @export
 #'
 #' @examples
-rebelKRParams=function (RebelFitObj, parallel=F, nCores=1) {
+rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
 
     EBEstimates=getEBEstimates(RebelFitObj)
     pseudoBulk=methods::slot(RebelFitObj, "pseudoBulk")
@@ -37,7 +37,7 @@ rebelKRParams=function (RebelFitObj, parallel=F, nCores=1) {
 
 
     if(parallel){
-        vcovBetaAdj= parallel::mclapply(gene_names, mc.silent = T, mc.cores = cores, function(gene){
+        vcovBetaAdj= parallel::mclapply(gene_names, mc.silent = TRUE, mc.cores = cores, function(gene){
             test=.VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFuns[[gene]],
                            Ztlist, sampleVariable=sampleVariable,
                            subjectVariable=subjectVariable,
@@ -109,7 +109,7 @@ rebelKRParams=function (RebelFitObj, parallel=F, nCores=1) {
     if(X==0) return(0)
     else{
         X <- t(chol(X/res_var))
-        X_unpacked <- X[lower.tri(X, diag=T)]
+        X_unpacked <- X[lower.tri(X, diag=TRUE)]
         return(X_unpacked)
     }
 
@@ -234,7 +234,7 @@ rebelKRParams=function (RebelFitObj, parallel=F, nCores=1) {
                 HH_list[[ii]] <- lapply(1:length(SigmaInv_list), function(x){
                     if(index_df[[x,"n_samps"]]==1){
                         matrix(apply(SigmaInv_list[[x]], 2, sum),nrow(SigmaInv_list[[x]]),
-                               nrow(SigmaInv_list[[x]]), byrow = T)
+                               nrow(SigmaInv_list[[x]]), byrow = TRUE)
                     }else{
                         min=index_df[[x,"min"]]
                         max=index_df[[x,"max"]]
@@ -244,7 +244,7 @@ rebelKRParams=function (RebelFitObj, parallel=F, nCores=1) {
                 HH=Matrix::bdiag(HH_list[[ii]])
             }else{
                 HH_list[[ii]]=lapply(SigmaInv_list,  function(x){
-                    test=matrix(apply(x, 2, sum),nrow(x), nrow(x), byrow = T)
+                    test=matrix(apply(x, 2, sum),nrow(x), nrow(x), byrow = TRUE)
                 })
                 HH=Matrix::bdiag(HH_list[[ii]])
             }

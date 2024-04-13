@@ -11,10 +11,10 @@ rebelLMM(
   pseudoBulk,
   subjectVariable,
   sampleVariable = NULL,
-  REML = T,
-  parallel = F,
+  REML = TRUE,
+  parallel = FALSE,
   cores = 2,
-  outputFits = F
+  outputFits = FALSE
 )
 }
 \arguments{

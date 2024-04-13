@@ -4,7 +4,7 @@
 \alias{rebelKRParams}
 \title{Title}
 \usage{
-rebelKRParams(RebelFitObj, parallel = F, nCores = 1)
+rebelKRParams(RebelFitObj, parallel = FALSE, nCores = 1)
 }
 \arguments{
 \item{nCores}{}
