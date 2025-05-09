@@ -37,7 +37,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
 
 
     if(parallel){
-        vcovBetaAdj= parallel::mclapply(gene_names, mc.silent = TRUE, mc.cores = cores, function(gene){
+        vcovBetaAdj= parallel::mclapply(gene_names, mc.silent = TRUE, mc.cores = nCores, function(gene){
             test=.VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFuns[[gene]],
                            Ztlist, sampleVariable=sampleVariable,
                            subjectVariable=subjectVariable,
