@@ -23,16 +23,15 @@ Imports:
     lme4,
     lmerTest,
     Matrix,
-    Matrix.utils,
     methods,
     parallel,
     pbapply,
     pbkrtest,
-    RESCUE (>= 0.1.0),
+    rescueSim,
     sctransform,
     SingleCellExperiment,
     SummarizedExperiment
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 Depends: 
     R (>= 4.4.0)
 LazyData: true

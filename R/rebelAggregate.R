@@ -41,9 +41,10 @@ rebelAggregate=function(object,countsAssay="counts", counts=NULL, colData=NULL, 
 
 
     ##Get summarized counts
-    pbCounts=t(as.matrix(Matrix.utils::aggregate.Matrix(t(counts),
-                                                      colData[,sampleVariable],
-                                                      fun="sum")))
+    grouping <- factor(colData[[sampleVariable]])
+    M <- Matrix::sparse.model.matrix(~ grouping + 0)  # cells x groups
+    colnames(M) <- levels(grouping)
+    pbCounts <- as.matrix(counts %*% M)
 
     ## Put back in original order
     pbCounts=pbCounts[,unique(colData[,sampleVariable])]

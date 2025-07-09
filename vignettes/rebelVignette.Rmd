@@ -17,7 +17,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 # Introduction
@@ -78,7 +78,7 @@ We will provide a more in depth of this process using a real example.
 
 # Simulation and processing of Example Data
 
-We use data simulated using the `Rescue` package, which can be used to
+We use data simulated using the `rescueSim` package, which can be used to
 simulate single-cell type longitudinal scRNA-seq data. We use preset
 simulation parameters available in the package, but parameters can also
 be estimated from empirical data.
@@ -94,7 +94,7 @@ decrease computation times for this example, we analyze only the first
 100 genes in the simulated data.
 
 ```{r}
-library(RESCUE)
+library(rescueSim)
 library(SummarizedExperiment)
 library(REBEL)
 
@@ -105,14 +105,14 @@ set.seed=24
 data("RecAM_params")
 
 ## Adjust parameters
-RecAM_params <- updateRescueParams(
+RecAM_params <- updateRescueSimParams(
     paramObj = RecAM_params,
     paramValues = list(
         twoGroupDesign = T,
         maxCellsPerSamp=150,
         minCellsPerSamp=50,
         propDE=.2,
-        deLogFC=1
+        deLog2FC=1
     )
 )
 
@@ -151,7 +151,7 @@ object.
 
 ```{r}
 
-assay(dat, "normcounts")<-sctransform::vst(counts(dat))$y
+assay(dat, "normcounts")<-sctransform::vst(counts(dat), show_progress = F)$y
 ```
 
 ## Model Fitting
