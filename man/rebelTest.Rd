@@ -13,12 +13,15 @@ function.}
 \item{coef}{Character string indicating which coefficient to summarize. If
 both coef and contrast are included, coef takes precedence.}
 
-\item{contrast}{A numeric vector the same length as the number of fixed
-effects representing a one-dimensional contrast.}
+\item{contrast}{A numeric vector or matrix specifying the linear contrast(s)
+of fixed effects to test. If a vector, it must be the same length of the number of
+fixed effects and represents a one-dimensional contrast. If a matrix, each row represents
+a contrast, and the number of columns must match the number of fixed effects. 
+Multi-row matrices are used for joint F-tests.}
 }
 \value{
 a dataframe with testing information, including Kenward-Rogers
-estimates for the standard error and degrees of freedom as well as the
+estimates degrees of freedom as well as the
 Benjamini-Hochberg adjusted p-values, for each gene. Genes appear in the
 order that they appear in the dataset.
 }
@@ -48,4 +51,10 @@ interaction_contrast_test=rebelTest(cell_fit, contrast = c(0,0,0,1))
 ## Using coefficient and contrast to test interaction produce identical results
 identical(interaction_coef_test, interaction_contrast_test)
 
+##  multi-dimensional contrast (F-test)
+contrast_mat <- rbind(c(0, 1, 0, 0),
+                   c(0, 0, 1, 0),
+                   c(0, 0, 0, 1))
+## simultaneous test of all coefficients
+joint_contrast_test=rebelTest(cell_fit, contrast = contrast_mat)
 }
