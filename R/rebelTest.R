@@ -66,6 +66,7 @@ rebelTest=function(RebelFitObj, coef=NULL, contrast=NULL){
       beta_h=rep(0, ncol(beta_mat))
       
       dplyr::bind_rows(lapply(geneNames, function(x){
+
         test_res<-.KR_adjust(PhiA=vcovBetaAdjList[[x]], Phi =vcovBetaList[[x]], L = contrast,
                    beta = beta_mat[x,], betaH = beta_h )
         Fvalue = test_res$FstatU
@@ -129,7 +130,7 @@ rebelTest=function(RebelFitObj, coef=NULL, contrast=NULL){
       A2 <- A2 + e * W[ii, jj] * sum(ui * t(uj))
     }
   }
-  q <- as.numeric(rankMatrix(L))
+  q <- as.numeric(Matrix::rankMatrix(L))
   B <- (1/(2 * q)) * (A1 + 6 * A2)
   g <- ((q + 1) * A1 - (q + 4) * A2)/((q + 2) * A2)
   c1 <- g/(3 * q + 2 * (1 - g))
@@ -167,7 +168,7 @@ rebelTest=function(RebelFitObj, coef=NULL, contrast=NULL){
 
 .spur<-function (U) 
 {
-  sum(diag(U))
+  sum(Matrix::diag(U))
 }
 
 .divZero<-function (x, y, tol = 1e-14) 
