@@ -2,6 +2,8 @@
 "_PACKAGE"
 
 ## usethis namespace: start
+#' @import SingleCellExperiment
+#' @import SummarizedExperiment
 #' @importFrom DESeq2 varianceStabilizingTransformation
 #' @importFrom dplyr bind_cols
 #' @importFrom dplyr bind_rows
@@ -32,5 +34,10 @@
 #' @importFrom sctransform vst
 #' @importFrom SummarizedExperiment assay
 #' @importFrom SummarizedExperiment colData
+#' @importClassesFrom SingleCellExperiment SingleCellExperiment
+#' @importClassesFrom SummarizedExperiment SummarizedExperiment
+#' @importClassesFrom S4Vectors DataFrame
+#' @importClassesFrom IRanges IRanges
+#' @importClassesFrom GenomicRanges GRanges
 ## usethis namespace: end
 NULL
