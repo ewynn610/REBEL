@@ -16,7 +16,8 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
     pseudoBulk=methods::slot(RebelFitObj, "pseudoBulk")
     flist=methods::slot(RebelFitObj, "miscFitInfo")[["flist"]]
     Ztlist=methods::slot(RebelFitObj, "miscFitInfo")[["Ztlist"]]
-    singleGeneFit=methods::slot(RebelFitObj, "miscFitInfo")[["singleGeneFit"]]
+    fr=methods::slot(RebelFitObj, "miscFitInfo")[["fr"]]
+    reTrms=methods::slot(RebelFitObj, "miscFitInfo")[["reTrms"]]
     subjectVariable=methods::slot(RebelFitObj, "subjectVariable")
     sampleVariable=methods::slot(RebelFitObj, "sampleVariable")
     modelMatrix=getModelMatrix(RebelFitObj)
