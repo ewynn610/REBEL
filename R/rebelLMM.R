@@ -110,7 +110,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
     reTrms <- lme4:::mkReTrms(lme4::findbars(formula), fr)
     
     ## Collect misc info
-    miscFitInfo=list(flist=flist, Ztlist=Ztlist, fr=fr, reTrms=reTrms)
+    miscFitInfo=list(flist=flist, Ztlist=Ztlist, fr=fr, reTrms=reTrms, formula=formula)
 
     ## Gather coefficients
     coefficients=as.matrix(dplyr::bind_rows(
