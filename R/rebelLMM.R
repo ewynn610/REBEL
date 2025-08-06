@@ -106,13 +106,11 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
     flist=lme4::getME(fit, "flist")
     Ztlist=lme4::getME(fit, "Ztlist")
     modelMatrix=lme4::getME(fit, "X")
-
-    ## Get devFuns
-    devFuns=lapply(ret, function(x) x$devFun)
-    names(devFuns)=gene_names
-
+    fr=model.frame(fit)
+    reTrms <- lme4:::mkReTrms(lme4::findbars(formula), fr)
+    
     ## Collect misc info
-    miscFitInfo=list(flist=flist, Ztlist=Ztlist, devFuns=devFuns)
+    miscFitInfo=list(flist=flist, Ztlist=Ztlist, fr=fr, reTrms=reTrms)
 
     ## Gather coefficients
     coefficients=as.matrix(dplyr::bind_rows(

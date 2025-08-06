@@ -16,6 +16,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
     pseudoBulk=methods::slot(RebelFitObj, "pseudoBulk")
     flist=methods::slot(RebelFitObj, "miscFitInfo")[["flist"]]
     Ztlist=methods::slot(RebelFitObj, "miscFitInfo")[["Ztlist"]]
+    singleGeneFit=methods::slot(RebelFitObj, "miscFitInfo")[["singleGeneFit"]]
     subjectVariable=methods::slot(RebelFitObj, "subjectVariable")
     sampleVariable=methods::slot(RebelFitObj, "sampleVariable")
     modelMatrix=getModelMatrix(RebelFitObj)
@@ -36,24 +37,34 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
     names(theta_list)=names(sigma_vals)=gene_names
 
 
-    if(parallel){
-        vcovBetaAdj= parallel::mclapply(gene_names, mc.silent = TRUE, mc.cores = nCores, function(gene){
-            test=.VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFuns[[gene]],
-                           Ztlist, sampleVariable=sampleVariable,
-                           subjectVariable=subjectVariable,
-                           nObs=nObs, modelMatrix=modelMatrix, pseudoBulk=pseudoBulk,
-                           flist=flist)
-        })
-    }else{
-        vcovBetaAdj= pbapply::pblapply(gene_names, function(gene){
-            .VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFuns[[gene]],
-                           Ztlist, sampleVariable=sampleVariable,
-                           subjectVariable=subjectVariable,
-                           nObs=nObs, modelMatrix=modelMatrix, pseudoBulk=pseudoBulk,
-                           flist=flist)
-        })
+    if (parallel) {
+      vcovBetaAdj = parallel::mclapply(gene_names, mc.silent = TRUE, 
+                                       mc.cores = nCores, function(gene) {
+                                         ## Have to define devFun inside mclapply or won't work
+                                         devFun=lme4::mkLmerDevfun(fr, X=modelMatrix, reTrms = reTrms)
+                                         test=.VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFun,
+                                                             Ztlist, sampleVariable=sampleVariable,
+                                                             subjectVariable=subjectVariable,
+                                                             nObs=nObs, modelMatrix=modelMatrix, pseudoBulk=pseudoBulk,
+                                                             flist=flist)
+                                       })
     }
-
+    else {
+      ## devFun can be outside of apply unless using parallel
+      ## Can use same devfun to get all inverse cholesky factors - only theta changes
+      devFun=lme4::mkLmerDevfun(fr, X=modelMatrix, reTrms = reTrms)
+      vcovBetaAdj = pbapply::pblapply(gene_names, function(gene) {
+        .VCovAdj_1Gene(theta = theta_list[[gene]], sigma = sigma_vals[gene], 
+                       devFun = devFun, Ztlist, sampleVariable = sampleVariable, 
+                       subjectVariable = subjectVariable, nObs = nObs, 
+                       modelMatrix = modelMatrix, pseudoBulk = pseudoBulk, 
+                       flist = flist)
+      })
+      ## Remake reterms because they get changed when devfun theta changes.
+      ## Just for consistency
+      methods::slot(RebelFitObj, "miscFitInfo")[["reTrms"]] <-
+        lme4:::mkReTrms(lme4::findbars(methods::slot(RebelFitObj, "miscFitInfo")[["formula"]]), fr)
+    }
     vcovBeta=lapply(vcovBetaAdj, function(x) x$vcovBeta)
     vcovBetaAdj=lapply(vcovBetaAdj, function(x) x$vcovBetaAdj)
 
