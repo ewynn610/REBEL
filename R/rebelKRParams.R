@@ -31,20 +31,26 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   })
   sigma_vals=sqrt(EBEstimates[, "resVar"])
   names(theta_list)=names(sigma_vals)=gene_names
-  G=.getGMats(Ztlist, sampleVariable, subjectVariable, nObs)
+  G=.getGMats(Ztlist, sampleVariable, subjectVariable, nObs, pseudoBulk = pseudoBulk)
   
   ## Parallel doesn't work well here on pseudobulk data
   if (parallel&!pseudoBulk) {
-    vcovBetaAdj = parallel::mclapply(gene_names, mc.silent = TRUE,
-                                     mc.cores = nCores, function(gene) {
-                                       ## Have to define devFun inside mclapply or won't work
-                                       devFun=lme4::mkLmerDevfun(fr, X=modelMatrix, reTrms = reTrms)
-                                       test=.VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFun,
-                                                           G=G, sampleVariable=sampleVariable,
-                                                           subjectVariable=subjectVariable,
-                                                           nObs=nObs, modelMatrix=modelMatrix, pseudoBulk=pseudoBulk,
-                                                           flist=flist)
-                                     })
+    #genes_per_chunk=50
+    #gene_chunks <- split(gene_names, ceiling(seq_along(gene_names) / genes_per_chunk))
+    vcovBetaAdj = #lapply(gene_chunks, function(chunk_gene_names) {
+      parallel::mclapply(gene_names,  mc.silent = TRUE,
+                         mc.cores = nCores, function(gene) {
+                           devFun=lme4::mkLmerDevfun(fr, X=modelMatrix, reTrms = reTrms)
+                           
+                           ## Have to define devFun inside mclapply or won't work
+                           test=.VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFun,
+                                               G=G, sampleVariable=sampleVariable,
+                                               subjectVariable=subjectVariable,
+                                               nObs=nObs, modelMatrix=modelMatrix, pseudoBulk=pseudoBulk,
+                                               flist=flist)
+                         })
+    #})
+    #vcovBetaAdj<-unlist(vcovBetaAdj, recursive=F)
   }
   else {
     ## devFun can be outside of apply unless using parallel
@@ -125,24 +131,32 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
 
 
 
-## Adapted from limma:::.get_SigmaG
-.getGMats=function(Ztlist, sampleVariable, subjectVariable, nObs){
-  G <- NULL
-  
-  ## Simplified this from pbkrtest code but now only works for random intercepts
-  for (ss in c(sampleVariable,subjectVariable)) {
-    ZZ <- Ztlist[[paste0(ss, ".(Intercept)")]]
-    G <- c(G, list(Matrix::crossprod(ZZ, ZZ)))
+## Adapted from pbkrtest:::.get_SigmaG
+.getGMats=function(Ztlist, sampleVariable, subjectVariable, nObs, pseudoBulk){
+  ## If it is not pseudoBulk, you only need sample level G matrix
+  ## May need to fix this for non-longitudinal
+  if(!pseudoBulk){
+    ZZ <- Ztlist[[paste0(sampleVariable, ".(Intercept)")]]
+    G <- Matrix::crossprod(ZZ, ZZ)
+  }else{
+    G <- NULL
+    
+    ## Simplified this from pbkrtest code but now only works for random intercepts
+    for (ss in c(sampleVariable,subjectVariable)) {
+      ZZ <- Ztlist[[paste0(ss, ".(Intercept)")]]
+      G <- c(G, list(Matrix::crossprod(ZZ, ZZ)))
+    }
+    
+    ## Note: There is old code incorporating weights here that I might use later.
+    G    <- c( G, list(Matrix::sparseMatrix(seq(1,nObs), seq(1,nObs), x=1 )))
+    
+    names(G)=c(sampleVariable, subjectVariable, "resid_var")
+    G
   }
-  
-  ## Note: There is old code incorporating weights here that I might use later.
-  G    <- c( G, list(Matrix::sparseMatrix(seq(1,nObs), seq(1,nObs), x=1 )))
-  
-  names(G)=c(sampleVariable, subjectVariable, "resid_var")
   G
 }
 
-## Adapted from limma:::.get_SigmaG
+## Adapted from pbkrtest:::.get_SigmaG
 .getGGamma=function(sigma, theta, sampleVariable, subjectVariable){
   sc=sigma
   cnms=rep(list("(Intercept)"), length(theta))
@@ -161,7 +175,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   return(ggamma)
 }
 
-## Adapted from limma:::.get_SigmaG
+## Adapted from pbkrtest:::.get_SigmaG
 .rebelGetSigmaG=function (sigma, theta, sampleVariable, subjectVariable, G)
 {
   
@@ -194,7 +208,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
     my_b=ggamma[[sampleVariable]]+ggamma[[subjectVariable]]
     my_c=ggamma[[subjectVariable]]
     
-    SigmaInv_list=lapply(unique(subj_vars), function(subj){
+    SigmaInv=Matrix::bdiag(lapply(unique(subj_vars), function(subj){
       samps=unique(samp_vars[subj_vars==subj])
       samps_n=table(samp_vars)[samps]
       m=samps_n[1]
@@ -210,8 +224,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
         }
       }
       return(ainv)
-    })
-    SigmaInv=Matrix::bdiag(SigmaInv_list)
+    }))
   }else{
     SigmaInv <- chol2inv(chol(Matrix::forceSymmetric(as(SigmaG$Sigma,
                                                         "matrix"))))
@@ -220,7 +233,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   
   n.ggamma <- ifelse(!pseudoBulk, length(ggamma), SigmaG$n.ggamma)
   TT <- SigmaInv %*% modelMatrix
-  HH_list <- HH <- OO <- vector("list", n.ggamma)
+  HH_list <- OO <- vector("list", n.ggamma)
   
   
   if(!pseudoBulk){
@@ -233,29 +246,35 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
     for (ii in 1:n.ggamma) {
       
       ## This only works for sample/subject random intercepts
-      gmat_name=names(G)[ii]
+      gmat_name=c(sampleVariable, subjectVariable, "resid_var")[[ii]]
       if(gmat_name=="resid_var"){
-        HH_list[[ii]]=SigmaInv_list
-        HH=SigmaInv
+        HH_list[[ii]]=lapply(1:nrow(index_df), function(x){
+          min=index_df[[x,"min"]]
+          max=index_df[[x,"max"]]
+          SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])})
+        OO[[ii]]=TT
       }else if(gmat_name==sampleVariable){
-        HH_list[[ii]] <- lapply(1:length(SigmaInv_list), function(x){
+        HH_list[[ii]] <- lapply(1:nrow(index_df), function(x){
+          min=index_df[[x,"min"]]
+          max=index_df[[x,"max"]]
+          SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])
           if(index_df[[x,"n_samps"]]==1){
-            matrix(apply(SigmaInv_list[[x]], 2, sum),nrow(SigmaInv_list[[x]]),
-                   nrow(SigmaInv_list[[x]]), byrow = TRUE)
+            matrix(apply(SigmaInvFil, 2, sum),nrow(SigmaInvFil),
+                   nrow(SigmaInvFil), byrow = TRUE)
           }else{
-            min=index_df[[x,"min"]]
-            max=index_df[[x,"max"]]
-            Matrix::crossprod(G[[ii]][min:max,min:max],SigmaInv_list[[x]])
+            Matrix::crossprod(G[min:max,min:max],SigmaInvFil)
           }
         })
-        HH=Matrix::bdiag(HH_list[[ii]])
+        OO[[ii]]=Matrix::bdiag(HH_list[[ii]])%*% modelMatrix
       }else{
-        HH_list[[ii]]=lapply(SigmaInv_list,  function(x){
-          test=matrix(apply(x, 2, sum),nrow(x), nrow(x), byrow = TRUE)
+        HH_list[[ii]]=lapply(1:nrow(index_df),  function(x){
+          min=index_df[[x,"min"]]
+          max=index_df[[x,"max"]]
+          SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])
+          test=matrix(apply(SigmaInvFil, 2, sum),nrow(SigmaInvFil), nrow(SigmaInvFil), byrow = TRUE)
         })
-        HH=Matrix::bdiag(HH_list[[ii]])
+        OO[[ii]]=Matrix::bdiag(HH_list[[ii]])%*% modelMatrix
       }
-      OO[[ii]] <- HH %*% modelMatrix
       
     }
   } else{
@@ -287,6 +306,8 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
           }))
       }
     }
+    rm(HH_list, HrTrans, SigmaInv, G)
+    gc(verbose=F)
   }else{
     for (rr in 1:n.ggamma) {
       HrTrans <- Matrix::t(HH[[rr]])
@@ -296,6 +317,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
       }
     }
   }
+  
   
   ## Finding IE2
   IE2 <- matrix(NA, nrow = n.ggamma, ncol = n.ggamma)
