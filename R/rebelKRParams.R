@@ -11,7 +11,6 @@
 #'
 #' @examples
 rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
-  
   EBEstimates=getEBEstimates(RebelFitObj)
   pseudoBulk=methods::slot(RebelFitObj, "pseudoBulk")
   flist=methods::slot(RebelFitObj, "miscFitInfo")[["flist"]]
@@ -19,7 +18,17 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   fr=methods::slot(RebelFitObj, "miscFitInfo")[["fr"]]
   reTrms=methods::slot(RebelFitObj, "miscFitInfo")[["reTrms"]]
   subjectVariable=methods::slot(RebelFitObj, "subjectVariable")
+  if (length(subjectVariable) == 0) {
+    subjectVariable <- NULL
+  } else {
+    subjectVariable <- subjectVariable
+  }
   sampleVariable=methods::slot(RebelFitObj, "sampleVariable")
+  if (length(sampleVariable) == 0) {
+    sampleVariable <- NULL
+  } else {
+    sampleVariable <- sampleVariable
+  }
   modelMatrix=getModelMatrix(RebelFitObj)
   nObs=nrow(modelMatrix)
   gene_names=getGeneNames(RebelFitObj)
@@ -31,7 +40,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   })
   sigma_vals=sqrt(EBEstimates[, "resVar"])
   names(theta_list)=names(sigma_vals)=gene_names
-  G=.getGMats(Ztlist, sampleVariable, subjectVariable, nObs, pseudoBulk = pseudoBulk)
+  G=.getGMats(Ztlist, sampleVariable, subjectVariable, nObs, pseudoBulk)
   
   ## Parallel doesn't work well here on pseudobulk data
   if (parallel&!pseudoBulk) {
@@ -46,8 +55,8 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
                            test=.VCovAdj_1Gene(theta=theta_list[[gene]], sigma=sigma_vals[gene], devFun=devFun,
                                                G=G, sampleVariable=sampleVariable,
                                                subjectVariable=subjectVariable,
-                                               nObs=nObs, modelMatrix=modelMatrix, pseudoBulk=pseudoBulk,
-                                               flist=flist)
+                                               nObs=nObs, modelMatrix=modelMatrix, 
+                                               flist=flist, pseudoBulk=pseudoBulk)
                          })
     #})
     #vcovBetaAdj<-unlist(vcovBetaAdj, recursive=F)
@@ -60,8 +69,8 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
       .VCovAdj_1Gene(theta = theta_list[[gene]], sigma = sigma_vals[gene], 
                      devFun = devFun, G=G, sampleVariable = sampleVariable, 
                      subjectVariable = subjectVariable, nObs = nObs, 
-                     modelMatrix = modelMatrix, pseudoBulk = pseudoBulk, 
-                     flist = flist)
+                     modelMatrix = modelMatrix, 
+                     flist = flist, pseudoBulk=pseudoBulk)
     })
     ## Remake reterms because they get changed when devfun theta changes.
     ## Just for consistency
@@ -81,10 +90,10 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
 
 
 .VCovAdj_1Gene=function(theta, sigma, devFun, G, sampleVariable,
-                        subjectVariable, nObs, modelMatrix, pseudoBulk,
-                        flist){
+                        subjectVariable, nObs, modelMatrix, 
+                        flist, pseudoBulk){
   vcovBeta=cov_beta=.get_covbeta(c(theta, sigma), devFun)
-  if(!pseudoBulk){
+  if(!is.null(sampleVariable) & !is.null(subjectVariable) &!pseudoBulk){
     ggamma=.getGGamma(sigma, theta, sampleVariable, subjectVariable)
     SigmaG=NULL
   }else{
@@ -93,10 +102,9 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   }
   vcovAdj=.rebelVCovAdj_internal(Phi=vcovBeta, G=G, SigmaG=SigmaG,
                                  ggamma=ggamma, modelMatrix=modelMatrix,
-                                 pseudoBulk=pseudoBulk,
                                  subjectVariable=subjectVariable,
                                  sampleVariable=sampleVariable,
-                                 flist=flist)
+                                 flist=flist, pseudoBulk=pseudoBulk)
   
   list(vcovBeta=vcovBeta, vcovBetaAdj=vcovAdj)
 }
@@ -133,9 +141,8 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
 
 ## Adapted from pbkrtest:::.get_SigmaG
 .getGMats=function(Ztlist, sampleVariable, subjectVariable, nObs, pseudoBulk){
-  ## If it is not pseudoBulk, you only need sample level G matrix
-  ## May need to fix this for non-longitudinal
-  if(!pseudoBulk){
+  ## If you have sample and subject level random effects, only need sample level G matrix
+  if(!is.null(sampleVariable) & !is.null(subjectVariable)&!pseudoBulk){
     ZZ <- Ztlist[[paste0(sampleVariable, ".(Intercept)")]]
     G <- Matrix::crossprod(ZZ, ZZ)
   }else{
@@ -196,11 +203,13 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   
 }
 
-.rebelVCovAdj_internal=function ( Phi, G, SigmaG=NULL,ggamma=NULL, modelMatrix,
-                                  pseudoBulk, subjectVariable, sampleVariable, flist)
+.rebelVCovAdj_internal=function ( Phi, G, SigmaG=NULL,ggamma=NULL, modelMatrix, 
+                                  subjectVariable, sampleVariable, flist, pseudoBulk)
 {
+  ## Indicator for if there are two random effects
+  two_re_ind_sc<-!is.null(sampleVariable) & !is.null(subjectVariable) &!pseudoBulk
   
-  if(!pseudoBulk){
+  if(two_re_ind){
     subj_vars=as.character(flist[[subjectVariable]])
     samp_vars=as.character(flist[[sampleVariable]])
     
@@ -226,17 +235,16 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
       return(ainv)
     }))
   }else{
-    SigmaInv <- chol2inv(chol(Matrix::forceSymmetric(as(SigmaG$Sigma,
-                                                        "matrix"))))
+    SigmaInv <- chol2inv(chol(Matrix::forceSymmetric(SigmaG$Sigma)))
   }
   
   
-  n.ggamma <- ifelse(!pseudoBulk, length(ggamma), SigmaG$n.ggamma)
+  n.ggamma <- ifelse(two_re_ind, length(ggamma), SigmaG$n.ggamma)
   TT <- SigmaInv %*% modelMatrix
-  HH_list <- OO <- vector("list", n.ggamma)
+  HH_list<- HH<- OO <- vector("list", n.ggamma)
   
   
-  if(!pseudoBulk){
+  if(two_re_ind){
     index_df=t(sapply(unique(subj_vars),  function(subj){
       maxval=max(which(subj_vars==subj))
       minval=min(which(subj_vars==subj))
@@ -296,7 +304,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   
   ## Finding Ktrace
   Ktrace <- matrix(NA, nrow = n.ggamma, ncol = n.ggamma)
-  if(!pseudoBulk){
+  if(two_re_ind){
     for (rr in 1:n.ggamma) {
       HrTrans <- lapply(HH_list[[rr]], Matrix::t)
       for (ss in rr:n.ggamma) {

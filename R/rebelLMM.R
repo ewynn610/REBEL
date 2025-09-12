@@ -7,7 +7,6 @@
 #' @param pseudoBulk
 #' @param subjectVariable
 #' @param sampleVariable
-#' @param REML
 #' @param parallel
 #' @param cores
 #' @param outputFits
@@ -22,7 +21,6 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
                      pseudoBulk, # Logical value, pseudo-bulk or not (if not cell level, pseudo-bulk)
                      subjectVariable,
                      sampleVariable=NULL,
-                     REML = TRUE, # Fit mixed models using REML or ML
                      parallel = FALSE,
                      cores = 2,
                      outputFits=FALSE
@@ -53,21 +51,26 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
     normalizedCounts <- as.matrix(normalizedCounts)
 
     ## Add random intercepts to formula
-    if(pseudoBulk){
-        formula=update(fixedEffects, paste0("expr~.+(1|",
-                                            subjectVariable, ")"))
-
-    }else{
-        formula=update(fixedEffects, paste0("expr~.+(1|", sampleVariable,
-                                            ")+(1|", subjectVariable, ")"))
-
+    random_effects <- c()
+    
+    if (!is.null(sampleVariable)) {
+      random_effects <- c(random_effects, paste0("(1|", sampleVariable, ")"))
     }
+    
+    if (!is.null(subjectVariable)) {
+        random_effects <- c(random_effects, paste0("(1|", subjectVariable, ")"))
+    }
+    
+    re_string <- paste(random_effects, collapse = " + ")
+    
+    formula <- update(fixedEffects, paste("expr~ . +", re_string))
+    
 
     ## Fit models
     if(parallel == FALSE){
         ret <- pbapply::pblapply(X = 1:nrow(normalizedCounts),FUN = function(i){
             .fitGeneMod(normalizedCounts[i,], gene_name=gene_names[i], colData,
-                        formula, REML,subjectVariable = subjectVariable,
+                        formula,subjectVariable = subjectVariable,
                         sampleVariable = sampleVariable,
                         pseudoBulk = pseudoBulk, outputFits = outputFits)
         })
@@ -77,7 +80,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
                                      .fitGeneMod(normalizedCounts[i,],
                                                  gene_name=gene_names[i],
                                                  colData,
-                                                 formula, REML,
+                                                 formula,
                                                  subjectVariable = subjectVariable,
                                                  sampleVariable = sampleVariable,
                                                  pseudoBulk = pseudoBulk,
@@ -96,7 +99,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
         fit=ret[[idx]]$fit
     }else{
         fit=.fitGeneMod(normalizedCounts[idx,], gene_name=gene_names[idx], colData,
-                        formula, REML,subjectVariable = subjectVariable,
+                        formula,subjectVariable = subjectVariable,
                         sampleVariable = sampleVariable,
                         pseudoBulk = pseudoBulk, outputFits = TRUE)
         fit=fit$fit
@@ -128,11 +131,12 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
                              modelMatrix=modelMatrix,
                              originalFitVar=modInfo,
                              miscFitInfo=miscFitInfo,
-                             subjectVariable=subjectVariable,
                              pseudoBulk=pseudoBulk
                              )
 
-    if(!pseudoBulk) methods::slot(RebelFitObj, "sampleVariable")=sampleVariable
+    if(!is.null(sampleVariable)) methods::slot(RebelFitObj, "sampleVariable")=sampleVariable
+    if(!is.null(subjectVariable)) methods::slot(RebelFitObj, "subjectVariable")=subjectVariable
+    
 
     if(outputFits) methods::slot(RebelFitObj, "fits")=lapply(ret, function(x) x$fit)
     RebelFitObj
@@ -142,7 +146,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
 
 
 
-.fitGeneMod=function(geneExpr, gene_name, colData, formula, REML,
+.fitGeneMod=function(geneExpr, gene_name, colData, formula,
                      subjectVariable, sampleVariable, pseudoBulk, outputFits){
 
     ## Bind gene expression and meta data
@@ -152,7 +156,7 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
     fit <- tryCatch({
         tmp1 <- suppressMessages(lmerTest::lmer(formula = formula,
                                                 data = dat_sub,
-                                                REML = REML))
+                                                REML = T))
     }, error = function(e) {
         ret_sub2 <- NULL
     })
@@ -167,14 +171,25 @@ rebelLMM <- function(fixedEffects, # Formula for fixed effects
 
         ## Variance info
         resVar=sigma(fit)^2
-        reVarSubj=unlist(lme4::VarCorr(fit))[[subjectVariable]]
-        modInfo=data.frame(gene=gene_name,
-                            singular=singular,
-                            resVar=resVar,
-                            reVarSubj=reVarSubj)
-
-        ## If cell level, add sample RE variance
-        if(!pseudoBulk) modInfo$reVarSamp=reVar=unlist(lme4::VarCorr(fit))[[sampleVariable]]
+        
+        # Start with basic data.frame
+        modInfo <- data.frame(
+          gene = gene_name,
+          singular = singular,
+          resVar = resVar
+        )
+        
+        # Conditionally add subject random effect variance
+        if (!is.null(subjectVariable)) {
+          reVarSubj <- unlist(lme4::VarCorr(fit))[[subjectVariable]]
+          modInfo$reVarSubj <- reVarSubj
+        }
+        
+        # Conditionally add sample random effect variance
+        if (!is.null(sampleVariable)) {
+          reVarSamp <- unlist(lme4::VarCorr(fit))[[sampleVariable]]
+          modInfo$reVarSamp <- reVarSamp
+        }
 
         ## Misc info for adj variance calculation
         devFun=lme4::getME(fit, "devfun")

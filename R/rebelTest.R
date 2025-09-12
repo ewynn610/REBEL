@@ -53,7 +53,6 @@ rebelTest=function(RebelFitObj, coef=NULL, contrast=NULL){
     vcovBetaList=methods::slot(RebelFitObj, "vcovBetaList")
     vcovBetaAdjList=methods::slot(RebelFitObj, "vcovBetaAdjList")
     EBEstimates=methods::slot(RebelFitObj, "EBEstimates")
-
     if(!is.null(coef)){
         if(!(coef %in% colnames(beta_mat))) stop("Coef must be one of the names of the model fixed effects")
         contrast=.contrastFromCoef(coef, beta_mat)

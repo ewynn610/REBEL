@@ -34,8 +34,6 @@
 #' of memory if TRUE.
 #' @param quiet Logical value indicating whether messages should be printed at
 #' each step.
-#' @param REML Logical value indicating if LMM models should be fit using REML
-#' or regular ML.
 #'
 #' @return A \code{\link[REBEL]{RebelFit-class} object}.
 #' @export
@@ -67,10 +65,10 @@
 #'                                  fixedEffects = ~time*group,
 #'                                  subjectVariable ="subjectID",
 #'                                  pseudoBulk = TRUE)
-rebelFit <- function(object,assay="normcounts", fixedEffects,subjectVariable,
+rebelFit <- function(object,assay="normcounts", fixedEffects,subjectVariable=NULL,
                      sampleVariable=NULL, normalizedCounts=NULL,
                      colData=NULL, pseudoBulk=TRUE,parallel=FALSE,
-                     nCores=1, outputFits=FALSE, quiet=FALSE, REML=TRUE){
+                     nCores=1, outputFits=FALSE, quiet=FALSE){
 
     if(exists("object")){
 
@@ -82,6 +80,16 @@ rebelFit <- function(object,assay="normcounts", fixedEffects,subjectVariable,
                  Alternatively, you can provide counts and colData explicitly")
         }
     }
+  
+  if (is.null(sampleVariable) && is.null(subjectVariable)) {
+    stop("At least one of sampleVariable or subjectVariable must be provided.")
+  }
+  
+  if (!pseudoBulk && is.null(sampleVariable) && !is.null(subjectVariable)) {
+    stop("For cell-level data, subjectVariable cannot be included without sampleVariable. 
+       If  no repeated measures, only provide sampleVariable.")
+  }
+  
     if(!quiet) print("Fitting LMM Models")
     ## Fit LMM models
     RebelFitObj=rebelLMM(fixedEffects=fixedEffects,
@@ -90,7 +98,6 @@ rebelFit <- function(object,assay="normcounts", fixedEffects,subjectVariable,
                   pseudoBulk=pseudoBulk,
                   subjectVariable=subjectVariable,
                   sampleVariable = sampleVariable,
-                  REML = REML,
                   parallel = parallel,
                   cores = nCores,
                   outputFits= outputFits)

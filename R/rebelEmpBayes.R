@@ -18,7 +18,17 @@ rebelEmpBayes=function(RebelFitObj){
     ## Get RE variables
     flist=methods::slot(RebelFitObj, "miscFitInfo")[["flist"]]
     subjectVariable=methods::slot(RebelFitObj, "subjectVariable")
+    if (length(subjectVariable) == 0) {
+      subjectVariable <- NULL
+    } else {
+      subjectVariable <- subjectVariable
+    }
     sampleVariable=methods::slot(RebelFitObj, "sampleVariable")
+    if (length(sampleVariable) == 0) {
+      sampleVariable <- NULL
+    } else {
+      sampleVariable <- sampleVariable
+    }
     pseudoBulk=methods::slot(RebelFitObj, "pseudoBulk")
     modInfo=getOriginalFitVar(RebelFitObj)
 
@@ -31,12 +41,21 @@ rebelEmpBayes=function(RebelFitObj){
 
 
     ## Find empirical bayes DF
-    dfSubjRE=length(unique(flist[[subjectVariable]]))-paramTypeN[["btw_subj"]]
+    
+    ## Initialize btw DF
+    btw_df=0
+    if(!is.null(subjectVariable)){
+      btw_df=dfSubjRE=length(unique(flist[[subjectVariable]]))-paramTypeN[["btw_subj"]]
+    } else dfSubjRE=NULL
     if(!pseudoBulk){
         dfRes=dfSampRE=length(unique(flist[[sampleVariable]]))-paramTypeN[["btw_samp"]]
     }else{
-        dfRes=numObs-numParams-dfSubjRE
-        dfSampRE=NULL
+      if(!is.null(sampleVariable)){
+        dfSampRE=length(unique(flist[[sampleVariable]]))-paramTypeN[["btw_samp"]]
+        btw_df=dfSampRE+btw_df
+      }else dfSampRE=NULL
+      
+      dfRes=numObs-numParams-btw_df
     }
     priorDF=c(reVarSubj=dfSubjRE, reVarSamp=dfSampRE, resVar=dfRes)
 
@@ -69,20 +88,26 @@ rebelEmpBayes=function(RebelFitObj){
 .findNumParamTypes=function(modelMatrix, flist, subjectVariable, sampleVariable,
                             pseudoBulk){
     fixEffNames=colnames(modelMatrix)
-
-    btw_subj_log <- .findParamTypeLog(modelMatrix,flist,subjectVariable, fixEffNames)
-    btw_subj_names <- names(btw_subj_log)[btw_subj_log]
-    btw_subj_n <- sum(btw_subj_log)
-
-
-
-    if(pseudoBulk){
-        return(c(btw_subj=btw_subj_n))
-    }else{
-        btw_samp_log <- .findParamTypeLog(modelMatrix,flist,sampleVariable, btw_subj_names)
-        btw_samp_n <- sum(btw_samp_log)
-        return(c(btw_subj=btw_subj_n, btw_samp=btw_samp_n))
+    btw_subj_names <- fixEffNames  # default if no subjectVariable
+    
+    out <- c()
+    
+    if (!is.null(subjectVariable)) {
+      btw_subj_log <- .findParamTypeLog(modelMatrix,flist,subjectVariable, fixEffNames)
+      btw_subj_names <- names(btw_subj_log)[btw_subj_log]
+      btw_subj_n <- sum(btw_subj_log)
+      out["btw_subj"] <- btw_subj_n
+      
     }
+    
+    # Add sample-level info if sampleVariable exists
+    if (!is.null(sampleVariable)) {
+      btw_samp_log <- .findParamTypeLog(modelMatrix, flist, sampleVariable, btw_subj_names)
+      btw_samp_n <- sum(btw_samp_log)
+      out["btw_samp"] <- btw_samp_n
+    }
+    return(out)
+    
 }
 
 .findParamTypeLog=function(modelMatrix,flist, var, fixEffNames){
