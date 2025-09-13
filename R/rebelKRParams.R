@@ -209,7 +209,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   ## Indicator for if there are two random effects
   two_re_ind_sc<-!is.null(sampleVariable) & !is.null(subjectVariable) &!pseudoBulk
   
-  if(two_re_ind){
+  if(two_re_ind_sc){
     subj_vars=as.character(flist[[subjectVariable]])
     samp_vars=as.character(flist[[sampleVariable]])
     
@@ -239,12 +239,12 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   }
   
   
-  n.ggamma <- ifelse(two_re_ind, length(ggamma), SigmaG$n.ggamma)
+  n.ggamma <- ifelse(two_re_ind_sc, length(ggamma), SigmaG$n.ggamma)
   TT <- SigmaInv %*% modelMatrix
   HH_list<- HH<- OO <- vector("list", n.ggamma)
   
   
-  if(two_re_ind){
+  if(two_re_ind_sc){
     index_df=t(sapply(unique(subj_vars),  function(subj){
       maxval=max(which(subj_vars==subj))
       minval=min(which(subj_vars==subj))
@@ -304,7 +304,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   
   ## Finding Ktrace
   Ktrace <- matrix(NA, nrow = n.ggamma, ncol = n.ggamma)
-  if(two_re_ind){
+  if(two_re_ind_sc){
     for (rr in 1:n.ggamma) {
       HrTrans <- lapply(HH_list[[rr]], Matrix::t)
       for (ss in rr:n.ggamma) {
