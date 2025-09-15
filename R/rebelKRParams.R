@@ -93,7 +93,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
                         subjectVariable, nObs, modelMatrix, 
                         flist, pseudoBulk){
   vcovBeta=cov_beta=.get_covbeta(c(theta, sigma), devFun)
-  if(!is.null(sampleVariable) & !is.null(subjectVariable) &!pseudoBulk){
+  if(!pseudoBulk){
     ggamma=.getGGamma(sigma, theta, sampleVariable, subjectVariable)
     SigmaG=NULL
   }else{
@@ -142,7 +142,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
 ## Adapted from pbkrtest:::.get_SigmaG
 .getGMats=function(Ztlist, sampleVariable, subjectVariable, nObs, pseudoBulk){
   ## If you have sample and subject level random effects, only need sample level G matrix
-  if(!is.null(sampleVariable) & !is.null(subjectVariable)&!pseudoBulk){
+  if(!pseudoBulk){
     ZZ <- Ztlist[[paste0(sampleVariable, ".(Intercept)")]]
     G <- Matrix::crossprod(ZZ, ZZ)
   }else{
@@ -206,85 +206,139 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
 .rebelVCovAdj_internal=function ( Phi, G, SigmaG=NULL,ggamma=NULL, modelMatrix, 
                                   subjectVariable, sampleVariable, flist, pseudoBulk)
 {
-  ## Indicator for if there are two random effects
-  two_re_ind_sc<-!is.null(sampleVariable) & !is.null(subjectVariable) &!pseudoBulk
   
-  if(two_re_ind_sc){
-    subj_vars=as.character(flist[[subjectVariable]])
-    samp_vars=as.character(flist[[sampleVariable]])
-    
-    my_a=sum(ggamma)
-    my_b=ggamma[[sampleVariable]]+ggamma[[subjectVariable]]
-    my_c=ggamma[[subjectVariable]]
-    
-    SigmaInv=Matrix::bdiag(lapply(unique(subj_vars), function(subj){
-      samps=unique(samp_vars[subj_vars==subj])
-      samps_n=table(samp_vars)[samps]
-      m=samps_n[1]
-      ainv=.shermMorrInv(my_a,my_b,m)
-      if(length(samps)>1){
-        for (i in seq(2, length(samps))) {
-          n=samps_n[i]
-          short=i==2
-          my_sinv=.calc_sinv(my_a, my_b, my_c, ainv, n, short)
-          q1=.quad1(ainv, my_c, my_sinv, short)
-          q3=.quad3(my_sinv, my_c, ainv, short)
-          ainv=rbind(cbind(q1, t(q3)), cbind(q3, my_sinv))
+  if(!pseudoBulk){
+    if(!is.null(subjectVariable)){
+      
+      subj_samp_order<-data.frame(subj_vars=as.character(flist[[subjectVariable]]),
+                     samp_vars=as.character(flist[[sampleVariable]]))
+      subj_samp_order$idx=1:nrow(subj_samp_order)
+      
+      subj_samp_order=subj_samp_order[order(subj_samp_order$subj_vars, subj_samp_order$samp_vars),]
+      G<-G[subj_samp_order$idx, subj_samp_order$idx]
+      modelMatrix<-modelMatrix[subj_samp_order$idx,]
+      
+      my_a=sum(ggamma)
+      my_b=ggamma[[sampleVariable]]+ggamma[[subjectVariable]]
+      my_c=ggamma[[subjectVariable]]
+      
+      SigmaInv=Matrix::bdiag(lapply(unique(subj_samp_order$subj_vars), function(subj){
+        samps=unique(subj_samp_order$samp_vars[subj_samp_order$subj_vars==subj])
+        samps_n=table(subj_samp_order$samp_vars)[samps]
+        m=samps_n[1]
+        ainv=.shermMorrInv(my_a,my_b,m)
+        if(length(samps)>1){
+          for (i in seq(2, length(samps))) {
+            n=samps_n[i]
+            short=i==2
+            my_sinv=.calc_sinv(my_a, my_b, my_c, ainv, n, short)
+            q1=.quad1(ainv, my_c, my_sinv, short)
+            q3=.quad3(my_sinv, my_c, ainv, short)
+            ainv=rbind(cbind(q1, t(q3)), cbind(q3, my_sinv))
+          }
         }
-      }
-      return(ainv)
-    }))
+        return(ainv)
+      }))
+    }else if(is.null(subjectVariable)){
+      subj_samp_order<-data.frame(samp_vars=as.character(flist[[sampleVariable]]))
+      subj_samp_order$idx=1:nrow(subj_samp_order)
+      
+      subj_samp_order=subj_samp_order[order(subj_samp_order$samp_vars),]
+      G<-G[subj_samp_order$idx, subj_samp_order$idx]
+      modelMatrix<-modelMatrix[subj_samp_order$idx,]
+      
+        
+      my_a=sum(ggamma)
+      my_b=ggamma[[sampleVariable]]
+      
+      SigmaInv=Matrix::bdiag(lapply(unique(subj_samp_order$samp_vars), function(samp){
+        samps=subj_samp_order$samp_vars[subj_samp_order$samp_vars==samp]
+        m=length(samps)
+        ainv=.shermMorrInv(my_a,my_b,m)
+        return(ainv)
+      }))
+    }
+    
   }else{
     SigmaInv <- chol2inv(chol(Matrix::forceSymmetric(SigmaG$Sigma)))
   }
   
   
-  n.ggamma <- ifelse(two_re_ind_sc, length(ggamma), SigmaG$n.ggamma)
+  n.ggamma <- ifelse(!pseudoBulk, length(ggamma), SigmaG$n.ggamma)
   TT <- SigmaInv %*% modelMatrix
   HH_list<- HH<- OO <- vector("list", n.ggamma)
   
   
-  if(two_re_ind_sc){
-    index_df=t(sapply(unique(subj_vars),  function(subj){
-      maxval=max(which(subj_vars==subj))
-      minval=min(which(subj_vars==subj))
-      n_samps=length(unique(samp_vars[subj_vars==subj]))
-      data.frame(min=minval, max=maxval, n_samps)
-    }))
-    for (ii in 1:n.ggamma) {
-      
-      ## This only works for sample/subject random intercepts
-      gmat_name=c(sampleVariable, subjectVariable, "resid_var")[[ii]]
-      if(gmat_name=="resid_var"){
-        HH_list[[ii]]=lapply(1:nrow(index_df), function(x){
-          min=index_df[[x,"min"]]
-          max=index_df[[x,"max"]]
-          SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])})
-        OO[[ii]]=TT
-      }else if(gmat_name==sampleVariable){
-        HH_list[[ii]] <- lapply(1:nrow(index_df), function(x){
-          min=index_df[[x,"min"]]
-          max=index_df[[x,"max"]]
-          SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])
-          if(index_df[[x,"n_samps"]]==1){
-            matrix(apply(SigmaInvFil, 2, sum),nrow(SigmaInvFil),
-                   nrow(SigmaInvFil), byrow = TRUE)
-          }else{
-            Matrix::crossprod(G[min:max,min:max],SigmaInvFil)
-          }
-        })
-        OO[[ii]]=Matrix::bdiag(HH_list[[ii]])%*% modelMatrix
-      }else{
-        HH_list[[ii]]=lapply(1:nrow(index_df),  function(x){
-          min=index_df[[x,"min"]]
-          max=index_df[[x,"max"]]
-          SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])
-          test=matrix(apply(SigmaInvFil, 2, sum),nrow(SigmaInvFil), nrow(SigmaInvFil), byrow = TRUE)
-        })
-        OO[[ii]]=Matrix::bdiag(HH_list[[ii]])%*% modelMatrix
+  if(!pseudoBulk){
+    if(!is.null(subjectVariable)){
+      index_df=t(sapply(unique(subj_samp_order$subj_vars),  function(subj){
+        maxval=max(which(subj_samp_order$subj_vars==subj))
+        minval=min(which(subj_samp_order$subj_vars==subj))
+        n_samps=length(unique(subj_samp_order$samp_vars[subj_samp_order$subj_vars==subj]))
+        data.frame(min=minval, max=maxval, n_samps)
+      }))
+      for (ii in 1:n.ggamma) {
+        
+        ## This only works for sample/subject random intercepts
+        gmat_name=c(sampleVariable, subjectVariable, "resid_var")[[ii]]
+        if(gmat_name=="resid_var"){
+          HH_list[[ii]]=lapply(1:nrow(index_df), function(x){
+            min=index_df[[x,"min"]]
+            max=index_df[[x,"max"]]
+            SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])})
+          OO[[ii]]=TT
+        }else if(gmat_name==sampleVariable){
+          HH_list[[ii]] <- lapply(1:nrow(index_df), function(x){
+            min=index_df[[x,"min"]]
+            max=index_df[[x,"max"]]
+            SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])
+            if(index_df[[x,"n_samps"]]==1){
+              matrix(apply(SigmaInvFil, 2, sum),nrow(SigmaInvFil),
+                     nrow(SigmaInvFil), byrow = TRUE)
+            }else{
+              Matrix::crossprod(G[min:max,min:max],SigmaInvFil)
+            }
+          })
+          OO[[ii]]=Matrix::bdiag(HH_list[[ii]])%*% modelMatrix
+        }else{
+          HH_list[[ii]]=lapply(1:nrow(index_df),  function(x){
+            min=index_df[[x,"min"]]
+            max=index_df[[x,"max"]]
+            SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])
+            test=matrix(apply(SigmaInvFil, 2, sum),nrow(SigmaInvFil), nrow(SigmaInvFil), byrow = TRUE)
+          })
+          OO[[ii]]=Matrix::bdiag(HH_list[[ii]])%*% modelMatrix
+        }
+        
       }
-      
+    }else if (is.null(subjectVariable)){
+      index_df=t(sapply(unique(subj_samp_order$samp_vars),  function(samp){
+        maxval=max(which(subj_samp_order$samp_vars==samp))
+        minval=min(which(subj_samp_order$samp_vars==samp))
+        data.frame(min=minval, max=maxval)
+      }))
+      for (ii in 1:n.ggamma) {
+        ## This only works for sample random intercepts
+        gmat_name=c(sampleVariable, "resid_var")[[ii]]
+        if(gmat_name=="resid_var"){
+          HH_list[[ii]]=lapply(1:nrow(index_df), function(x){
+            min=index_df[[x,"min"]]
+            max=index_df[[x,"max"]]
+            SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])})
+          OO[[ii]]=TT
+        }else if(gmat_name==sampleVariable){
+          HH_list[[ii]] <- lapply(1:nrow(index_df), function(x){
+            min=index_df[[x,"min"]]
+            max=index_df[[x,"max"]]
+            SigmaInvFil=as.matrix(SigmaInv[min:max,min:max, drop=F])
+              matrix(apply(SigmaInvFil, 2, sum),nrow(SigmaInvFil),
+                     nrow(SigmaInvFil), byrow = TRUE)
+          })
+          OO[[ii]]=Matrix::bdiag(HH_list[[ii]])%*% modelMatrix
+        }
+      }
     }
+    
   } else{
     for (ii in 1:n.ggamma) {
       HH[[ii]] <- Matrix::crossprod(G[[ii]],SigmaInv)
@@ -304,7 +358,7 @@ rebelKRParams=function (RebelFitObj, parallel=FALSE, nCores=1) {
   
   ## Finding Ktrace
   Ktrace <- matrix(NA, nrow = n.ggamma, ncol = n.ggamma)
-  if(two_re_ind_sc){
+  if(!pseudoBulk){
     for (rr in 1:n.ggamma) {
       HrTrans <- lapply(HH_list[[rr]], Matrix::t)
       for (ss in rr:n.ggamma) {
