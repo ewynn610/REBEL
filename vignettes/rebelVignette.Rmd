@@ -257,7 +257,7 @@ interaction effect.
 
 ```{r}
 interaction_contrast_test=rebelTest(rebelFit_obj, contrast = c(0,0,0,1))
-head(interaction_coef_test)
+head(interaction_contrast_test)
 identical(interaction_coef_test, interaction_contrast_test)
 ```
 
