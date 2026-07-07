@@ -151,7 +151,7 @@ object.
 
 ```{r}
 
-assay(dat, "normcounts")<-sctransform::vst(counts(dat), show_progress = F)$y
+assay(dat, "normcounts")<-sctransform::vst(counts(dat))$y
 ```
 
 ## Model Fitting
