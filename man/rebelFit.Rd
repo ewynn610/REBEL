@@ -8,7 +8,7 @@ rebelFit(
   object,
   assay = "normcounts",
   fixedEffects,
-  subjectVariable,
+  subjectVariable = NULL,
   sampleVariable = NULL,
   normalizedCounts = NULL,
   colData = NULL,
@@ -16,8 +16,7 @@ rebelFit(
   parallel = FALSE,
   nCores = 1,
   outputFits = FALSE,
-  quiet = FALSE,
-  REML = TRUE
+  quiet = FALSE
 )
 }
 \arguments{
@@ -66,9 +65,6 @@ of memory if TRUE.}
 
 \item{quiet}{Logical value indicating whether messages should be printed at
 each step.}
-
-\item{REML}{Logical value indicating if LMM models should be fit using REML
-or regular ML.}
 }
 \value{
 A \code{\link[REBEL]{RebelFit-class} object}.

@@ -2,13 +2,13 @@
 % Please edit documentation in R/AllClasses.R
 \name{getOriginalFitVar}
 \alias{getOriginalFitVar}
-\title{Title}
+\title{Extract Original Variance Estimates from RebelFitObj}
 \usage{
 getOriginalFitVar(RebelFitObj)
 }
 \arguments{
-\item{RebelFitObj}{}
+\item{RebelFitObj}{Object created by running rebelFit}
 }
 \description{
-Title
+Extract Original Variance Estimates from RebelFitObj
 }

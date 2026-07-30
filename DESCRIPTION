@@ -31,7 +31,7 @@ Imports:
     sctransform,
     SingleCellExperiment,
     SummarizedExperiment
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Depends: 
     R (>= 4.4.0)
 LazyData: true

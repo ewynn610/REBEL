@@ -2,13 +2,21 @@
 % Please edit documentation in R/rebelKRParams.R
 \name{rebelKRParams}
 \alias{rebelKRParams}
-\title{Title}
+\title{Estimate parameters for Kenward Rogers Degrees of freedom}
 \usage{
 rebelKRParams(RebelFitObj, parallel = FALSE, nCores = 1)
 }
 \arguments{
-\item{nCores}{}
+\item{RebelFitObj}{Object created by running rebelLMM and rebelEmpBayes}
+
+\item{parallel}{Logical value indicating whether to use parallelization via
+\code{mclapply}.}
+
+\item{nCores}{Number of cores to use if \code{parallel} is \code{TRUE}.}
+}
+\value{
+A \code{\link[REBEL]{RebelFit-class} object}.
 }
 \description{
-Title
+Estimate parameters for Kenward Rogers Degrees of freedom
 }

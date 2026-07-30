@@ -63,7 +63,7 @@ setClass("RebelFit",
 
 #' Extract Model Matrix from RebelFitObj
 #'
-#' @param RebelFitObj
+#' @param RebelFitObj Object created by running rebelFit
 #'
 #' @return
 #' @export
@@ -75,7 +75,7 @@ getModelMatrix <- function(RebelFitObj) {
 
 #' Extract Empirical Bayes Estimates from RebelFitObj
 #'
-#' @param RebelFitObj
+#' @param RebelFitObj Object created by running rebelFit
 #'
 #' @return
 #' @export
@@ -87,7 +87,7 @@ getEBEstimates <- function(RebelFitObj) {
 
 #' Extract Empirical Bayes Parameters from RebelFitObj
 #'
-#' @param RebelFitObj
+#' @param RebelFitObj Object created by running rebelFit
 #'
 #' @return
 #' @export
@@ -99,7 +99,7 @@ getEBParameters <- function(RebelFitObj) {
 
 #' Extract Original Variance Estimates from RebelFitObj
 #'
-#' @param RebelFitObj
+#' @param RebelFitObj Object created by running rebelFit
 #'
 #' @return
 #' @export
@@ -112,7 +112,7 @@ getOriginalFitVar<- function(RebelFitObj) {
 
 #' Extract Gene Names from RebelFitObj
 #'
-#' @param RebelFitObj
+#' @param RebelFitObj Object created by running rebelFit
 #'
 #' @return
 #' @export

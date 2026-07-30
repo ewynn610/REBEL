@@ -2,13 +2,16 @@
 % Please edit documentation in R/rebelEmpBayes.R
 \name{rebelEmpBayes}
 \alias{rebelEmpBayes}
-\title{Title}
+\title{Run Empirical Bayes procedure on linear mixed models}
 \usage{
 rebelEmpBayes(RebelFitObj)
 }
 \arguments{
-\item{RebelFitObj}{}
+\item{RebelFitObj}{Object created by running rebelLMM}
+}
+\value{
+A \code{\link[REBEL]{RebelFit-class} object}.
 }
 \description{
-Title
+Run Empirical Bayes procedure on linear mixed models
 }

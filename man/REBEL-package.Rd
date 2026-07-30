@@ -12,6 +12,7 @@ Simulate data from repeated measures scRNA-seq data and analyze differential exp
 Useful links:
 \itemize{
   \item \url{https://github.com/ewynn610/REBEL}
+  \item \url{https://ewynn610.github.io/REBEL/}
   \item Report bugs at \url{https://github.com/ewynn610/REBEL/issues}
 }
 

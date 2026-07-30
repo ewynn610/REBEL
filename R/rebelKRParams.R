@@ -1,12 +1,13 @@
 
 
-#' Title
+#' Estimate parameters for Kenward Rogers Degrees of freedom 
 #'
-#' @param RebelFitObj
-#' @param parallel
-#' @param nCores
+#' @param RebelFitObj Object created by running rebelLMM and rebelEmpBayes
+#' @param parallel Logical value indicating whether to use parallelization via
+#' \code{mclapply}.
+#' @param nCores Number of cores to use if \code{parallel} is \code{TRUE}.
 #'
-#' @return
+#' @return A \code{\link[REBEL]{RebelFit-class} object}.
 #' @export
 #'
 #' @examples

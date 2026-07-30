@@ -2,13 +2,13 @@
 % Please edit documentation in R/AllClasses.R
 \name{getGeneNames}
 \alias{getGeneNames}
-\title{Title}
+\title{Extract Gene Names from RebelFitObj}
 \usage{
 getGeneNames(RebelFitObj)
 }
 \arguments{
-\item{RebelFitObj}{}
+\item{RebelFitObj}{Object created by running rebelFit}
 }
 \description{
-Title
+Extract Gene Names from RebelFitObj
 }

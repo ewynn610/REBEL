@@ -2,13 +2,13 @@
 % Please edit documentation in R/AllClasses.R
 \name{getEBParameters}
 \alias{getEBParameters}
-\title{Title}
+\title{Extract Empirical Bayes Parameters from RebelFitObj}
 \usage{
 getEBParameters(RebelFitObj)
 }
 \arguments{
-\item{RebelFitObj}{}
+\item{RebelFitObj}{Object created by running rebelFit}
 }
 \description{
-Title
+Extract Empirical Bayes Parameters from RebelFitObj
 }

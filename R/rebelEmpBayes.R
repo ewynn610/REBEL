@@ -1,9 +1,9 @@
 
-#' Title
+#' Run Empirical Bayes procedure on linear mixed models
 #'
-#' @param RebelFitObj
+#' @param RebelFitObj Object created by running rebelLMM
 #'
-#' @return
+#' @return A \code{\link[REBEL]{RebelFit-class} object}.
 #' @export
 #'
 #' @examples

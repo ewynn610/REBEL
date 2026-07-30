@@ -2,13 +2,13 @@
 % Please edit documentation in R/AllClasses.R
 \name{getEBEstimates}
 \alias{getEBEstimates}
-\title{Title}
+\title{Extract Empirical Bayes Estimates from RebelFitObj}
 \usage{
 getEBEstimates(RebelFitObj)
 }
 \arguments{
-\item{RebelFitObj}{}
+\item{RebelFitObj}{Object created by running rebelFit}
 }
 \description{
-Title
+Extract Empirical Bayes Estimates from RebelFitObj
 }

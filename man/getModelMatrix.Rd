@@ -2,13 +2,13 @@
 % Please edit documentation in R/AllClasses.R
 \name{getModelMatrix}
 \alias{getModelMatrix}
-\title{Title}
+\title{Extract Model Matrix from RebelFitObj}
 \usage{
 getModelMatrix(RebelFitObj)
 }
 \arguments{
-\item{RebelFitObj}{}
+\item{RebelFitObj}{Object created by running rebelFit}
 }
 \description{
-Title
+Extract Model Matrix from RebelFitObj
 }

@@ -1,15 +1,32 @@
 
-#' Title
+#' Fit linear mixed models on cell level of pseudo-bulk data
 #'
-#' @param fixedEffects
-#' @param normalizedCounts
-#' @param colData
-#' @param pseudoBulk
-#' @param subjectVariable
-#' @param sampleVariable
-#' @param parallel
-#' @param cores
-#' @param outputFits
+#' @param fixedEffects One sided linear formula describing the fixed-effects on the right of the ~ operator.
+#'  Terms should be separated by + operators. Terms should be variables
+#'  in \code{colData}.
+#' @param normalizedCounts Optional matrix-like object containing normalized
+#' counts. Used in conjunction with \code{colData} argument in place of object. Matrix
+#' should contain genes in the rows and cells (cell-level data) or samples
+#' (pseudo-bulk data) in the columns.
+#' @param colData Optional dataframe object containing cell/sample level meta
+#' data which is used with \code{normalizedCounts} argument in place of object.
+#' Row names of dataframe should match column names of \code{normalizedCounts}.
+#' @param pseudoBulk Logical value indicating whether a pseudo-bulk or
+#' cell-level analysis is being performed.
+#' @param subjectVariable String denoting name of subject identifier in
+#' the \code{colData} to be used as the subject-level random effect in the
+#' LMM model.
+#' @param sampleVariable String denoting name of sample identifier variable in
+#' the \code{colData} to be used as the sample-level random effect in the LMM model.
+#' For pseudo-bulk data where no sample-level random effect is used, should be
+#' \code{NULL}.
+#' @param parallel Logical value indicating whether to use parallelization via
+#' \code{mclapply}.
+#' @param nCores Number of cores to use if \code{parallel} is \code{TRUE}.
+#' @param outputFits Logical value indicating whether or not to include fit
+#' objects from \code{\link[lmerTest]{lmerTest}} in the output. Only necessary
+#' if user would like to inspect elements of the object. May use a large amount
+#' of memory if TRUE.
 #'
 #' @return
 #' @export
