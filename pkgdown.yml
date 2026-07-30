@@ -3,7 +3,7 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   rebelVignette: rebelVignette.html
-last_built: 2026-07-30T21:59Z
+last_built: 2026-07-30T22:19Z
 urls:
   reference: https://ewynn610.github.io/REBEL/reference
   article: https://ewynn610.github.io/REBEL/articles

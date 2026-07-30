@@ -9,7 +9,7 @@ rebelFit(
   object,
   assay = "normcounts",
   fixedEffects,
-  subjectVariable,
+  subjectVariable = NULL,
   sampleVariable = NULL,
   normalizedCounts = NULL,
   colData = NULL,
@@ -17,8 +17,7 @@ rebelFit(
   parallel = FALSE,
   nCores = 1,
   outputFits = FALSE,
-  quiet = FALSE,
-  REML = TRUE
+  quiet = FALSE
 )
 ```
 
@@ -93,11 +92,6 @@ rebelFit(
 
   Logical value indicating whether messages should be printed at each
   step.
-
-- REML:
-
-  Logical value indicating if LMM models should be fit using REML or
-  regular ML.
 
 ## Value
 

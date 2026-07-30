@@ -1,6 +1,6 @@
-# Title
+# Extract Original Variance Estimates from RebelFitObj
 
-Title
+Extract Original Variance Estimates from RebelFitObj
 
 ## Usage
 
@@ -11,3 +11,5 @@ getOriginalFitVar(RebelFitObj)
 ## Arguments
 
 - RebelFitObj:
+
+  Object created by running rebelFit

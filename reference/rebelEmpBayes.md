@@ -1,6 +1,6 @@
-# Title
+# Run Empirical Bayes procedure on linear mixed models
 
-Title
+Run Empirical Bayes procedure on linear mixed models
 
 ## Usage
 
@@ -11,3 +11,10 @@ rebelEmpBayes(RebelFitObj)
 ## Arguments
 
 - RebelFitObj:
+
+  Object created by running rebelLMM
+
+## Value
+
+A
+[`RebelFit-class`](https://ewynn610.github.io/REBEL/reference/RebelFit-class.md)` object`.

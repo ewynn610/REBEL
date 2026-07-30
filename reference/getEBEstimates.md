@@ -1,6 +1,6 @@
-# Title
+# Extract Empirical Bayes Estimates from RebelFitObj
 
-Title
+Extract Empirical Bayes Estimates from RebelFitObj
 
 ## Usage
 
@@ -11,3 +11,5 @@ getEBEstimates(RebelFitObj)
 ## Arguments
 
 - RebelFitObj:
+
+  Object created by running rebelFit

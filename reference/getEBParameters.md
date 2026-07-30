@@ -1,6 +1,6 @@
-# Title
+# Extract Empirical Bayes Parameters from RebelFitObj
 
-Title
+Extract Empirical Bayes Parameters from RebelFitObj
 
 ## Usage
 
@@ -11,3 +11,5 @@ getEBParameters(RebelFitObj)
 ## Arguments
 
 - RebelFitObj:
+
+  Object created by running rebelFit

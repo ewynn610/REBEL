@@ -10,4 +10,6 @@ Useful links:
 
 - <https://github.com/ewynn610/REBEL>
 
+- <https://ewynn610.github.io/REBEL/>
+
 - Report bugs at <https://github.com/ewynn610/REBEL/issues>

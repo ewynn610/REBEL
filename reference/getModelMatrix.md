@@ -1,6 +1,6 @@
-# Title
+# Extract Model Matrix from RebelFitObj
 
-Title
+Extract Model Matrix from RebelFitObj
 
 ## Usage
 
@@ -11,3 +11,5 @@ getModelMatrix(RebelFitObj)
 ## Arguments
 
 - RebelFitObj:
+
+  Object created by running rebelFit

@@ -1,6 +1,6 @@
-# Title
+# Extract Gene Names from RebelFitObj
 
-Title
+Extract Gene Names from RebelFitObj
 
 ## Usage
 
@@ -11,3 +11,5 @@ getGeneNames(RebelFitObj)
 ## Arguments
 
 - RebelFitObj:
+
+  Object created by running rebelFit
