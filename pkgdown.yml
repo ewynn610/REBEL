@@ -1,0 +1,9 @@
+pandoc: 3.8.3
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  rebelVignette: rebelVignette.html
+last_built: 2026-07-30T00:47Z
+urls:
+  reference: https://ewynn610.github.io/REBEL/reference
+  article: https://ewynn610.github.io/REBEL/articles
