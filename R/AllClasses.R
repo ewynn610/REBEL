@@ -61,7 +61,7 @@ setClass("RebelFit",
 ## ADD in show method so not all data is output
 
 
-#' Title
+#' Extract Model Matrix from RebelFitObj
 #'
 #' @param RebelFitObj
 #'
@@ -73,7 +73,7 @@ getModelMatrix <- function(RebelFitObj) {
     methods::slot(RebelFitObj, "modelMatrix")
 }
 
-#' Title
+#' Extract Empirical Bayes Estimates from RebelFitObj
 #'
 #' @param RebelFitObj
 #'
@@ -85,7 +85,7 @@ getEBEstimates <- function(RebelFitObj) {
     methods::slot(RebelFitObj, "EBEstimates")
 }
 
-#' Title
+#' Extract Empirical Bayes Parameters from RebelFitObj
 #'
 #' @param RebelFitObj
 #'
@@ -97,7 +97,7 @@ getEBParameters <- function(RebelFitObj) {
     methods::slot(RebelFitObj, "EBParameters")
 }
 
-#' Title
+#' Extract Original Variance Estimates from RebelFitObj
 #'
 #' @param RebelFitObj
 #'
@@ -110,7 +110,7 @@ getOriginalFitVar<- function(RebelFitObj) {
 }
 
 
-#' Title
+#' Extract Gene Names from RebelFitObj
 #'
 #' @param RebelFitObj
 #'
