@@ -1,5 +1,5 @@
 ---
-title: "REBEL: Repeated measures Empirical Bayes differential Expression analysis using Linear mixed models"
+title: "Intro to REBEL"
 output:
   html_document:
     toc: true
@@ -151,7 +151,7 @@ object.
 
 ```{r}
 
-assay(dat, "normcounts")<-sctransform::vst(counts(dat))$y
+assay(dat, "normcounts")<-sctransform::vst(counts(dat), verbosity=0)$y
 ```
 
 ## Model Fitting
@@ -313,7 +313,7 @@ RNA-seq data that yields normally distributed counts can be used.
 
 ```{r}
 ## Apply VST and save results in normcounts assay
-assay(pb_dat,"normcounts")=DESeq2::varianceStabilizingTransformation(assay(pb_dat,"counts"), blind = F)
+assay(pb_dat,"normcounts")=DESeq2::varianceStabilizingTransformation(assay(pb_dat,"counts"))
 ```
 
 ## Model Fitting
