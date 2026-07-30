@@ -52,14 +52,51 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="rebel-repeated-measures-empirical-bayes-differential-expression-analysis-using-linear-mixed-models">REBEL: Repeated measures Empirical Bayes differential Expression analysis using Linear mixed models<a class="anchor" aria-label="anchor" href="#rebel-repeated-measures-empirical-bayes-differential-expression-analysis-using-linear-mixed-models"></a>
+<div class="page-header"><h1 id="rebel-repeated-measures-empirical-bayes-differential-expression-analysis-using-linear-mixed-models">REBEL: Repeated Measures Empirical Bayes Differential Expression Analysis Using Linear Mixed Models<a class="anchor" aria-label="anchor" href="#rebel-repeated-measures-empirical-bayes-differential-expression-analysis-using-linear-mixed-models"></a>
 </h1></div>
+<p><strong>REBEL</strong> is an R package for cell-type specific differential expression analysis in repeated measures single-cell RNA-sequencing (scRNA-seq) studies.</p>
+<p>The package applies linear mixed models and empirical Bayes moderation to identify differentially expressed genes while accounting for within-subject correlation arising from paired, longitudinal, and other repeated measures study designs.</p>
+<p><strong>Website:</strong> <a href="https://ewynn610.github.io/REBEL/">REBEL website</a></p>
+<p><strong>Vignette:</strong> - <a href="https://ewynn610.github.io/REBEL/articles/rebelVignette.html">Introduction to REBEL</a></p>
 <div class="section level2">
-<h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
+<h2 id="getting-started">Getting Started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
 </h2>
-<p>REBEL is an R package for analyzing cell-type specific differential expression in longitudinal and other repeated measure scRNA-seq studies. It can be installed from github using the following code:</p>
-<p><code>{r} if (!requireNamespace("devtools", quietly = TRUE)) {   install.packages("devtools") } devtools::install_github("https://github.com/ewynn610/REBEL", build_vignettes = TRUE)</code></p>
-<p>Once the package is installed, to access a vignette introducing the package workflow use: <code>{r} vignette("rebelVignette")</code></p>
+<div class="section level3">
+<h3 id="install-dependencies">Install Dependencies<a class="anchor" aria-label="anchor" href="#install-dependencies"></a>
+</h3>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co">## CRAN packages</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"dplyr"</span>,</span>
+<span>    <span class="st">"lme4"</span>,</span>
+<span>    <span class="st">"lmerTest"</span>,</span>
+<span>    <span class="st">"limma"</span>,</span>
+<span>    <span class="st">"Matrix"</span>,</span>
+<span>    <span class="st">"pbapply"</span>,</span>
+<span>    <span class="st">"pbkrtest"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co">## Bioconductor packages</span></span>
+<span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"BiocManager"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"BiocManager"</span><span class="op">)</span></span>
+<span><span class="op">}</span></span>
+<span></span>
+<span><span class="fu">BiocManager</span><span class="fu">::</span><span class="fu">install</span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
+<span>    <span class="st">"DESeq2"</span>,</span>
+<span>    <span class="st">"SingleCellExperiment"</span>,</span>
+<span>    <span class="st">"SummarizedExperiment"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="install-rebel-from-github">Install REBEL from GitHub<a class="anchor" aria-label="anchor" href="#install-rebel-from-github"></a>
+</h3>
+<p><strong>Note:</strong> The package vignettes are available on the package website. If you’d prefer to build the vignettes locally during installation, you can set <code>build_vignettes = TRUE</code>, though this may take longer.</p>
+<p><code>{r} if (!requireNamespace("devtools", quietly = TRUE)) {   install.packages("devtools") } devtools::install_github("https://github.com/ewynn610/REBEL",  build_vignettes = FALSE)</code></p>
+</div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
@@ -73,7 +110,8 @@
 <div class="license">
 <h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
-<li>What license is it under?</li>
+<li><a href="LICENSE.html">Full license</a></li>
+<li><small><a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a></small></li>
 </ul>
 </div>
 
