@@ -6,7 +6,7 @@ Author: Elizabeth Wynn <elizabeth.2.wynn@cuanschutz.edu>
 Maintainer: Elizabeth Wynn <elizabeth.2.wynn@cuanschutz.edu>
 Description: Simulate data from repeated measures scRNA-seq data and analyze
     differential expression between groups/timepoints in individual cell types
-License: What license is it under?
+License: MIT + file LICENSE
 Encoding: UTF-8
 Suggests: 
     knitr,
