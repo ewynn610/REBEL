@@ -38,4 +38,4 @@ LazyData: true
 URL: https://github.com/ewynn610/REBEL, https://ewynn610.github.io/REBEL/
 BugReports: https://github.com/ewynn610/REBEL/issues
 Remotes: 
-    ewynn610/Rescue
+    ewynn610/rescueSim
